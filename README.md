@@ -4,5 +4,6 @@ Este es un repositorio para documentar y colaborar en el código del robot para 
 ## Descripción
 
 ## Cosas que hacer
-- [] Agregar el punto final y mapeo a la zona A
-- [] Implementar dfs a zona C y detección de colore 
+**Progra:**
+- [ ] Agregar el punto final y mapeo a la zona A
+- [ ] Implementar dfs a zona C y detección de colore 
