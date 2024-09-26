@@ -113,10 +113,7 @@ void fuga(){
             }
             girarIzq();
 
-        }else{
-
         }
-    
     }
 }
 
