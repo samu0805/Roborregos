@@ -1,0 +1,6 @@
+void camino(){
+
+}
+int main(){
+    
+}
