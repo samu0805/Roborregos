@@ -6,7 +6,14 @@ int places[3][5] = {{0,0,0,0,0}
 int posY = 1;
 int posX = 0;
 
+void retroceder(){
+    girarIzq();
+    girarIzq();
+    adelante();
+    girarIzq();
+    girarIzq();
 
+}
 void adelante(){
     //inicializar motores
     /* 
@@ -43,6 +50,7 @@ bool cuadroNegro(){
 
 }
 
+
 //método para buscar y mapear todos 
 void search(){
     if(places[posY][posX] == 0){
@@ -52,11 +60,7 @@ void search(){
             if(paredAdelante() == false){
                 adelante();
                 search();
-                girarIzq();
-                girarIzq();
-                adelante();
-                girarIzq();
-                girarIzq();
+                retroceder();
             }
             girarIzq();
         }
