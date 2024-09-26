@@ -11,6 +11,7 @@ Simple_MPU6050 mpu(Six_Axis_Quaternions);
 int x_rotation;//angulo de rotacion
 float ypr[3] = { 0, 0, 0 };
 float xyz[3] = { 0, 0, 0 };
+//pines por definir
 //motores
 const int ENA_MT1 = 10;
 const int ENA_MT2 = 11;
@@ -19,6 +20,12 @@ const int IN2_MT = 3;
 const int IN3_MT = 4;
 const int IN4_MT = 5;
 int SPEED_MT=200;
+//sensor de color
+const int s0=6
+const int s1=7
+const int s2=8
+const int s3=9
+const int outTCS=12
 //delay time
 int dt=500;
 
@@ -49,6 +56,14 @@ void setup() {
   pinMode(ENA_MT2,OUTPUT);
   analogWrite(ENA_MT1,SPEED_MT);
   analogWrite(ENA_MT2,SPEED_MT);
+  //sensor de color
+  pinMode(s0,OUTPUT);
+  pinMode(s1,OUTPUT);
+  pinMode(s2,OUTPUT);
+  pinMode(s3,OUTPUT);
+  pinMode(outTCS,INPUT);
+  digitalWrite(s0,1);
+  digitalWrite(s1,0); 
 
 }
 
@@ -113,6 +128,79 @@ void left(){
   digitalWrite(IN3_MT,0);
   digitalWrite(IN4_MT,0);
 
+}
+//senosr de color
+void getcolor(){//devuelve el color
+// 1:morado
+// 2:rosa
+// 3:amarillo
+// 4:negro
+  digitalWrite(s2,0);
+  digitalWrite(s3,0);
+  int red=pulseIn(outTCS,0);
+  delay(20);
+  
+  digitalWrite(s2,1);
+  digitalWrite(s3,1);
+  int green=pulseIn(outTCS,0);
+  delay(20);
+
+  digitalWrite(s2,0);
+  digitalWrite(s3,1);
+  int blue=pulseIn(outTCS,0);
+  delay(20);
+
+if(green>red && green>blue && red>blue && blue<200){
+  // Serial.println("Color MORADO");
+  return 1;
+}
+
+else if(green>red && green>blue && blue>red){
+  // Serial.println("Color ROSA");
+  return 2;
+
+}
+
+else if(blue>green && blue>red && green>red && red<200 ){
+  // Serial.println("Color AMARILLO");
+  return 3;
+}
+
+else if(green>200 && blue>200 && red>200){
+  // Serial.println("Color NEGRO");
+    return 4;
+}
+
+// else if(green<100 && blue<100 && red<100 && (green-red)<20 && (green-blue)<20){
+//   Serial.println("Color Blanco");
+// }
+
+//else{
+    //Serial.println("Color no encontrado");
+//}
+
+void setColors(){//devuelve valores RGB
+  digitalWrite(s2,0);
+  digitalWrite(s3,0);
+  int red=pulseIn(outTCS,1);
+  delay(200);
+  
+  digitalWrite(s2,1);
+  digitalWrite(s3,1);
+  int green=pulseIn(outTCS,1);
+  delay(200);
+
+  digitalWrite(s2,0);
+  digitalWrite(s3,1);
+  int blue=pulseIn(outTCS,1);
+  delay(200);
+
+Serial.print("Red:");
+Serial.print(red);
+Serial.print(" Green:");
+Serial.print(green);
+Serial.print(" Blue:");
+Serial.println(blue);
 }
 //funciones de MPU6050
 void loop_mpu(){
