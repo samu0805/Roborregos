@@ -1,11 +1,14 @@
 #include <iostream>
+using namespace std; 
 
-int places[3][5] = {{0,0,0,0,0}
-                ,   {0,0,0,0,0}
-                ,   {0,0,0,0,0}};
-int posY = 1;
-int posX = 0;
+void adelante(){
+    
+}
+void girarIzq(){
+}
+void girarDer(){
 
+}
 void retroceder(){
     girarIzq();
     girarIzq();
@@ -14,60 +17,138 @@ void retroceder(){
     girarIzq();
 
 }
-void adelante(){
-    //inicializar motores
-    /* 
-    int t = 0; //- > segundos
-    while (t < 30){ //(estimado, puede variar, medir práctica)
-        if (lineaAbajo() == true){
-            //poner motores en nulo
-            t= 0;
-            while( t< 10){ //(tiempo estimado en regresar al centro)
-                //activar motoroes en sentido negativo (retroceder) <-
-                t++; 
-            }
-            t= 30;
-        }else{
-            //activar motores en sentido positivo (avanzar) ->
-            t++; 
-        }
-        
-    }
-    */
-    
-}
-void girarIzq(){
-}
-void girarDer(){
-
-}
 
 bool paredAdelante(){
     //ver si hay una pared para entrar al centro
     return true;
 }
 bool cuadroNegro(){
-
+    return true; 
 }
+
+
+/*
+
 
 
 //método para buscar y mapear todos 
-void search(){
-    if(places[posY][posX] == 0){
-        places[posY][posX] == 1;
-        
-        for(int i = 0; i< 4; i++){
-            if(paredAdelante() == false){
-                adelante();
-                search();
-                retroceder();
-            }
-            girarIzq();
+//vectores de direccion: izquierda, derecha, abajo, arriba
+int directions[4][2] = {{-2, 0}, {2, 0}, {0, -2}, {0, 2}};
+
+// Parámetros: laberinto, posición x e y, arreglo de valores visitados
+void dfs(int maze[11][7], int x, int y, bool visited[11][7]) {
+    // Verifica si está fuera de los límites y si ya fue visitado
+    if (x < 0 || y < 0 || x >= 11 || y >= 7 || visited[x][y]) {
+        return;
+    }
+    
+    // Marcar como visitado
+    visited[x][y] = true;
+    
+    // Imprimir la posición actual
+    cout << "Visitando posición: (" << x << ", " << y << ")" << endl;
+
+    // Explorar las 4 direcciones
+    for (int i = 0; i < 4; i++) {
+        int newX = x + directions[i][0];
+        int newY = y + directions[i][1];
+        int wall = maze[x+ (directions[i][0])/2][y +(directions[i][1])/2];
+        cout << wall;
+        if (wall == 1){ 
+            dfs(maze, newX, newY, visited);
         }
     }
-
- }
-
-int main(){
-
 }
+
+int main() {
+    // Inicialización del laberinto usando un arreglo multidimensional(0 -> casillas, 1-> puerta abierta, 2-> pared ahí)
+    int maze[11][7] = {
+        {1, 1, 1, 1, 1, 1, 1},
+        {1, 0, 1, 0, 1, 0, 1},
+        {1, 2, 1, 2, 1, 1, 1},
+        {1, 0, 1, 0, 1, 0, 1},
+        {1, 2, 1, 1, 1, 2, 1},
+        {1, 0, 1, 0, 1, 0, 1},
+        {1, 2, 1, 2, 1, 1, 1},
+        {1, 0, 1, 0, 1, 0, 1},
+        {1, 1, 1, 2, 1, 2, 1},
+        {1, 0, 1, 0, 1, 0, 1},
+        {1, 1, 1, 1, 1, 1, 1}
+    };
+
+    // Arreglo para llevar el control de las celdas visitadas
+    bool visited[11][7] = {{false}}; 
+
+    int start_x = 1, start_y = 1;
+
+    // Iniciar DFS
+    dfs(maze, start_x, start_y, visited);
+
+    return 0;
+}
+
+*/
+
+int directions[4][2] = {{-2, 0}, {2, 0}, {0, -2}, {0, 2}};
+int path[4][2] = {{-1, 0}, {1,0}, {0, -1}, {0, 1}}; 
+
+int maze[11][7] = {
+        {1, 1, 1, 1, 1, 1, 1},
+        {1, 0, 1, 0, 1, 0, 1},
+        {1, 1, 1, 1, 1, 1, 1},
+        {1, 0, 1, 0, 1, 0, 1},
+        {1, 1, 1, 1, 1, 1, 1},
+        {1, 0, 1, 0, 1, 0, 1},
+        {1, 1, 1, 1, 1, 1, 1},
+        {1, 0, 1, 0, 1, 0, 1},
+        {1, 1, 1, 1, 1, 1, 1},
+        {1, 0, 1, 0, 1, 0, 1},
+        {1, 1, 1, 1, 1, 1, 1}
+    };
+int backstep[5][3]={
+        {0, 0, 0},
+        {0, 0, 0},
+        {0, 0, 0},
+        {0, 0, 0},
+        {0, 0, 0},
+    };
+
+void dfs(int maze[11][7], int x, int y, bool visited[11][7]) {
+    // Verifica si está fuera de los límites o si ya fue visitado
+    if (x < 0 || y < 0 || x >= 11 || y >= 7 || visited[x][y]) {
+        return;
+    }
+    
+    // Marcar como visitado
+    visited[x][y] = true;
+    
+    // Imprimir la posición actual
+    cout << "Visitando posición: (" << x << ", " << y << ")" << endl;
+
+    // Explorar las 4 direcciones
+    for (int i = 0; i < 4; i++) {
+        int newX = x + directions[i][0];
+        int newY = y + directions[i][1];
+        int newPx = x + path[i][0];
+        int newPy = y + path[i][0];
+        int wall = maze[x+ (directions[i][0])/2][y +(directions[i][1])/2];
+        cout << wall;
+        if (wall == 1){ 
+            dfs(maze, newX, newY, visited);
+        }
+    }
+}
+
+int main() {
+
+    // Arreglo para llevar el control de las celdas visitadas
+    bool visited[11][7] = {{false}}; 
+
+    int start_x = 1, start_y = 1;
+
+    // Iniciar DFS
+    dfs(maze, start_x, start_y, visited);
+
+    return 0;
+}
+

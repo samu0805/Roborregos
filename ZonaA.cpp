@@ -7,7 +7,6 @@ bool lineaEncontrada = true;
 int posX = 0;
 int posY = 0;
 
-// 1-> recorrido, 0-> no recorrido. Camino de regreso. Valor inicial == lugar[1][0]
 int lugares[3][3] = {{0,0,0}, {0,0,0}, {0,0,0}};
 int paredes[7][7] = {{0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}}; 
 
