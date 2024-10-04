@@ -49,20 +49,19 @@ using namespace std;
 
 int directions[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 
-// Parámetros: laberinto, posición x e y, arreglo de valores visitados
 void dfs(int maze[5][4], int x, int y, bool visited[5][4]) {
     // Verifica si está fuera de los límites, si es una pared (1) o si ya fue visitado
     if (x < 0 || y < 0 || x >= 5 || y >= 4 || maze[x][y] == 1 || visited[x][y]) {
         return;
     }
     
-    // Marcar como visitado
+    // marcar como visitado
     visited[x][y] = true;
     
-    // Imprimir la posición actual
+    // imprimir posición actual
     cout << "Visitando posición: (" << x << ", " << y << ")" << endl;
 
-    // Explorar las 4 direcciones
+    // explorar las 4 direcciones
     for (int i = 0; i < 4; ++i) {
         int newX = x + directions[i][0];
         int newY = y + directions[i][1];
@@ -71,7 +70,7 @@ void dfs(int maze[5][4], int x, int y, bool visited[5][4]) {
 }
 
 int main() {
-    // Inicialización del laberinto usando un arreglo multidimensional
+    // inicialización del laberinto usando un arreglo multidimensional
     int maze[5][4] = {
         {0, 0, 1, 0},
         {1, 0, 1, 0},
@@ -80,12 +79,12 @@ int main() {
         {0, 0, 0, 0}
     };
 
-    // Arreglo para llevar el control de las celdas visitadas
+    // arreglo para llevar el control de las celdas visitadas
     bool visited[5][4] = {{false}}; 
 
     int start_x = 0, start_y = 0;
 
-    // Iniciar DFS
+    // iniciar DFS
     dfs(maze, start_x, start_y, visited);
 
     return 0;
