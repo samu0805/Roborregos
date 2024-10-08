@@ -1,28 +1,36 @@
 #include <iostream>
 using namespace std; 
 
-void adelante(){
-    
-}
-void girarIzq(){
-    //cambiar los valores de directions
-    int tempx = directions[0][0];
-    int tempy = directions[0][1];
+void adelante(){}
+void girarIzq(){}
+void girarDer(){}
 
-    for (int i = 0; i< 3; i++){
-        directions[i][0] = directions[i+1][0];
-        directions[i][1] = directions[i+1][1];
+void move(int op){
+    if (op == 0){
+        adelante();
+        //poner motores para adelante
+    }else if(op == 1){
+        girarIzq();
+        girarIzq();
+        adelante();
+        girarIzq();
+        girarIzq();
+        //irse hacia atrás
     }
-    directions[3][0] = tempx;
-    directions[3][1] = tempy;
 }
-void retroceder(){
-    girarIzq();
-    girarIzq();
-    adelante();
-    girarIzq();
-    girarIzq();
-
+void girar(int op){
+    //cambiar los valores de directions
+    if (op == 0){
+        girarIzq();
+        adelante();
+        girarDer();
+        //poicionarse viendo hacia el norte
+    }else if(op == 1){
+        girarDer();
+        adelante();
+        girarIzq();
+        //poicionarse viendo hacia el norte       
+    }
 }
 
 bool paredAdelante(){
@@ -33,9 +41,9 @@ bool cuadroNegro(){
     return true; 
 }
 int colorDet(){
+
     return 0;
 }
-
 
 /*
 
@@ -96,48 +104,91 @@ int main() {
 
     return 0;
 }
+*/
 
+/* EJEMPLO CLASE:
+void recursiveFunction(int n){
+    if (n == 0){
+        return; 
+    }
+
+    cout << "funcion regresiva" << n;
+    recursiveFunction(n-1);
+    cout << "regresando" << n;
+}
+int fibRecursivo(int n){
+    if(n == 0){
+        return 0;
+    }
+    if(n== 1){
+        return 1;
+    }
+    return fibRecursivo(n-1) + fibRecursiv(n-2)
+}
 */
 // arriba, izquierda, abajo, derecha
-int directions[4][2] = {{0, 1}, {-1, 0}, {0, -1}, {1, 0} };
+int directions[4][2] = {{0, 1}, {-1, 0}, {0, -1}, {1, 0}};
+// 1 adelante, 2 girar izquierda, 3 atras, 4 girar derecha 
+stack<int> st; 
 
-int backstep[5][3]={{0}};
+int backstep[5][3]={{20}};
 
-void dfs(bool visited[5][3], int x, int y, int count){
+void dfs(bool visited[5][3], int x, int y){
     count = count +1;
     if (visited[x][y]){
-        retroceder();
         return;
     }
+    colorDet();
     visited[x][y] = true;
-    backstep[x][y] = count;
+    if (count < backstep[x][y]){
+        backstep[x][y] = count;
+    }
 
     for (int i = 0; i<4; i++){
         if(paredAdelante() == false){
             int newX = x + directions[0][0];
             int newY = y + directions[0][1];
-            adelante();
-            dfs(visited,newX, newY, count);
-            retroceder();
-            girarIzq();
+            if (cuadroNegro() == true){
+                visited[newX][newY] = true;
+            }else{
+                for(int j = i; j>0; j--){
+                    girarDer();
+                }
+                switch(i) {
+                    case 0:
+                        move(0);
+                        break;
+                    case 1:
+                        girar(0);
+                        break;
+                    case 2:
+                        move(1);
+                        break;
+                    case 3: 
+                        girar(1);
+                    default:
+                        // code block
+                    }
+                dfs(visited,newX, newY);
+            }
         }else{
             girarIzq();
         }
     }
 }
 
-
 int main() {
     int count = 0;
-    // Arreglo para llevar el control de las celdas visitadas
+    // arreglo para llevar el control de las celdas visitadas
     bool visited[5][3] = {{false}}; 
-
+    // punto inicial
     int start_x = 1, start_y = 1;
 
     
-    // Iniciar DFS
+    // iniciar DFS
     dfs(visited, start_x, start_y, count);
     
+    // imprimir matriz con los valores de distancia
     for (int i = 0; i< 5; i++){
         for (int j= 0; j< 3; j++){
             cout << backstep[i][j];
