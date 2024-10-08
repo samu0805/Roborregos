@@ -4,12 +4,8 @@
 bool foundPelota = false; 
 bool foundSalida = false;
 bool lineaEncontrada = true; 
-int posX = 0;
-int posY = 0;
-
-int lugares[3][3] = {{0,0,0}, {0,0,0}, {0,0,0}};
-int paredes[7][7] = {{0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}}; 
-
+int countD= 0;
+int countL=0;
 //método de referencia para determinar encontrada
 void pelotaEncontrada(){
     //vuelta 180 y todo para atras
@@ -82,9 +78,12 @@ void busquedaPelota() {
                 adelante();
                 girarDer();
             }
+            countD++;
         }else{
             pelotaEncontrada();
+            foundPelota = true;
         }
+       
     }
     while (foundPelota == false){
         if(paredAdelante() == true){
@@ -93,11 +92,14 @@ void busquedaPelota() {
             girarDer();
             adelante();
             girarDer();
+            countL++;
         }else{
             pelotaEncontrada();
         }
+        
     }
 }
+/*
 void fuga(){
     girarIzq();
 
@@ -112,6 +114,103 @@ void fuga(){
             }
             girarIzq();
 
+        }
+    }
+}*/
+
+
+void fuga(){
+    int pos = countD-countL;
+    adelante();
+    if(lineaEncontrada){
+        if(abs(pos)== 2){
+            adelante();
+        }
+        else if(pos == -3){
+            girarIzq();
+            adelante();
+            girarIzq();
+            adelante();
+            girarDer();
+            adelante();
+        }
+        else if(pos == -1 || pos == 3){
+            girarDer();
+            adelante();
+            girarDer();
+            adelante();
+            girarIzq();
+            adelante();
+        }
+        else{
+            //pos == 0;
+            girarDer();
+            adelante();
+            girarDer();
+            adelante();
+            adelante();
+            girarDer();
+            adelante();
+            girarIzq();
+            adelante();
+        }
+    }else{
+        //peor caso
+        //pos == 1 -> true
+        // or pos == 0
+        int it = 0;
+        while (lineaEncontrada == false && foundSalida == false && it<2){
+            girarIzq();
+            if(lineaAbajo() == false && lineaEncontrada == false){
+                adelante();
+                girarIzq();
+            }else{
+                lineaEncontrada = true;
+                girarDer();
+            }
+            if(lineaAbajo() == false && lineaEncontrada == false){
+                adelante();
+                girarIzq();
+            }else{
+                lineaEncontrada = true;
+                girarIzq();
+                adelante();
+                girarIzq();
+            }
+            
+            if(paredAdelante() == true){
+                i++;   
+            }else{
+                adelante();
+                if(getcolor() == "rojo"){
+                    foundSalida = true;
+                }
+            }
+            girarDer();
+       
+        }
+        if (foundSalida == false){
+            //tanto 0 como 1 pueden hacer esto
+            girarDer();
+            adelante();
+            girarDer();
+            adelante();
+            adelante();
+            girarDer();
+            adelante();
+            girarIzq();
+
+            if(paredAdelante() == true){
+                girarDer();
+                adelante();
+                girarDer();
+                adelante();
+                girarIzq();
+            }
+            if(paredAdelante() == false){
+                adelante();
+            }
+        
         }
     }
 }
