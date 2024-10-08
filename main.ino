@@ -1,197 +1,534 @@
-//sensores y motores conectados al arduino 
-//declarar los 2 motores (Señales PWM)
-const int ENA_PIN = 0;
-const int IN1_PIN = 1;
-const int IN2_PIN = 2;
-const int IN3_PIN = 3;
-const int IN4_PIN = 4;
-//infrarrojo (digital - input)
-const int infra1 = 5;  
-const int infra2 = 6;
-//ultrasonico (digital - input/output)
-const int trigger = 7; 
-const int echo = 8;
-//led RGB
-const int ledRGB = 9; 
-//sensor de color(digital/analoga, input/output) 
-const int s0 = 10;  
-const int s1 = 11;  
-const int s2 = 12;  
-const int s3 = 13;  
-const int out = 14;    
+#include <PID_v1.h>//libreria PID
+//MPU6050
+#include "Simple_MPU6050.h"
+#define MPU6050_ADDRESS_AD0_LOW     0x68 
+#define MPU6050_ADDRESS_AD0_HIGH    0x69 
+#define MPU6050_DEFAULT_ADDRESS     MPU6050_ADDRESS_AD0_LOW
+#define Three_Axis_Quaternions 3
+#define Six_Axis_Quaternions 6  
+Simple_MPU6050 mpu(Six_Axis_Quaternions);
+#define spamtimer(t) for (static uint32_t SpamTimer; (uint32_t)(millis() - SpamTimer) >= (t); SpamTimer = millis()) 
+#define printfloatx(Name,Variable,Spaces,Precision,EndTxt) print(Name); {char S[(Spaces + Precision + 3)];Serial.print(F(" ")); Serial.print(dtostrf((float)Variable,Spaces,Precision ,S));}Serial.print(EndTxt);
+int z_rotation;//angulo de rotacion
+float ypr[3] = { 0, 0, 0 };
+float xyz[3] = { 0, 0, 0 };
+//Motores
+const int ENA_MT1 = 50;
+const int ENA_MT2 = 51;
+const int IN1_MT = 52;
+const int IN2_MT = 53;
+const int IN3_MT = 4;
+const int IN4_MT = 5;
+int SPEED_MT=100;//velocidad inicial
+//encoders-variables de control
+const int encoder=3;
+const int encoder2;//por definir
+int state;
+int c;
+int last;
+int frenado;//avance del motor en el frenado
 
 
-//botones (digital - input)
-int botonA = 15;
-int botonB = 16; 
-int botonC = 17;
+// Variables para PID
+double setpoint; // Valor deseado de velocidad
+double input;    // Valor actual de velocidad
+double output;   // Salida del PID
+unsigned long time1;
 
 
-//otras variables
-int countBot = 0;
-bool end = false;
+// Parámetros del PID
+double Kp = 1.0; // Ganancia proporcional
+double Ki = 2.0; // Ganancia integral
+double Kd = 0.001; // Ganancia derivativa
 
+// Inicializa el PID
+PID myPID(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
-//funciones de movimiento
-void adelante(){
-    //primer motor (izq)
-    digitalWrite(IN1_PIN, HIGH);
-    digitalWrite(IN2_PIN, LOW);
+int dt=500;
+int orientacion=0;
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  inicializarMPU6050();//MPU6050 Inicializacion
+  //motores
+  pinMode(IN1_MT,OUTPUT);
+  pinMode(IN2_MT,OUTPUT);
+  pinMode(IN3_MT,OUTPUT);
+  pinMode(IN4_MT,OUTPUT);
+  pinMode(ENA_MT1,OUTPUT);
+  pinMode(ENA_MT2,OUTPUT);
+  analogWrite(ENA_MT1,SPEED_MT);
+  analogWrite(ENA_MT2,SPEED_MT);
+  //encoder
+  pinMode(encoder,INPUT);
+  attachInterrupt(1,interruption,RISING);//interrupcion para contar pulsos del encoder
 
-    //segundo motor (der)
-    digitalWrite(IN3_PIN, LOW);
-    digitalWrite(IN4_PIN, HIGH); 
+    //PID
+    //30cm en 1.5s=58RPM
+    //en 2s=43RPM
+  setpoint = 110; //RPM deseadas
+  myPID.SetMode(AUTOMATIC);
+  calibracion_MT();  //calibracion de velocidad con PID
 }
-void girarDer(){
-    //primer motor (der)
-    digitalWrite(IN1_PIN, LOW);
-    digitalWrite(IN2_PIN, LOW);
 
-    //segundo motor (izq)
-    digitalWrite(IN3_PIN, LOW);
-    digitalWrite(IN4_PIN, HIGH);
+void loop() {
+  //codigo prueba
+  loop_mpu();
+  ahead(1);
+  stop(300);
+  right();
+  stop(200);
+  back(1);
+  stop(300);
+  left();
+  stop(200); 
+
+  if (ZonaA){
+    adelante();
+    busquedaPelota();
+    fuga();
+  }
 }
-void girarIzq(){
-    //primer motor (der)
-    digitalWrite(IN1_PIN, HIGH);
-    digitalWrite(IN2_PIN, LOW);
+//CALIBRACION DE VELOCIDAD CON PID
+void calibracion_MT(){
+  time1=millis();
+  while((millis()-time1)<5000){
+    input = (c * 15); // Convertir pulsos a RPM (ajusta según tu encoder)
+    c = 0; // Reinicia el contador para la siguiente medición
 
-    //segundo motor (izq))
-    digitalWrite(IN3_PIN, LOW);
-    digitalWrite(IN4_PIN, LOW);   
+    // Calcula el PID
+    myPID.Compute();
+
+    // Controla el motor
+    analogWrite(ENA_MT1, output); // Establece la velocidad del motor
+    digitalWrite(IN1_MT, HIGH); // Establece la dirección
+    digitalWrite(IN2_MT, LOW);
+
+    // Imprime información en el monitor serie
+    Serial.print("Setpoint: ");
+    Serial.print(setpoint);
+    Serial.print(" | Input: ");
+    Serial.print(input);
+    Serial.print(" | Output: ");
+    Serial.println(output);
+
+    delay(100); // Espera un poco antes de la siguiente lectura
+
+  }
+  //calculo del avance del motor en el frenado
+  c=0;
+  while(c<=40){
+    Serial.print("");
+  }
+  stop(500);
+  frenado=c-40;
+  SPEED_MT=output;//establecer velocidad ideal
+}
+//funcion contabilizadora de pulsos del encoder
+void interruption(){
+  state=digitalRead(encoder);
+  if(state!=last){
+    c++;
+    last=state;
+    Serial.println(c);
+  }
+}
+//
+void units(int x){//establece el numero de unidades que avanzara el robot 40pulsos=rev(20.7cm), 58pulsos=30cm
+  c=0;
+  while(c<=x*(58-frenado)){
+    Serial.print("");
+  }
+  c=0;
+}
+void ahead(int x){//avance adelnate, la variable x indica cuantas unidades desea que avance
+  digitalWrite(IN1_MT,1);
+  digitalWrite(IN2_MT,0);
+  digitalWrite(IN3_MT,1);
+  digitalWrite(IN4_MT,0);
+  units(x);
+  stop(0);
 }
 
-//funciones de detección y lógica 
-bool paredAdelante(){
-    digitalWrite(trigger, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(trigger, LOW);
+void back(int x){//retroceso
+  digitalWrite(IN1_MT,0);
+  digitalWrite(IN2_MT,1);
+  digitalWrite(IN3_MT,0);
+  digitalWrite(IN4_MT,1);
+  units(x);
+  stop(0);
+}
+void stop(int x){
+  digitalWrite(IN1_MT,0);
+  digitalWrite(IN2_MT,0);
+  digitalWrite(IN3_MT,0);
+  digitalWrite(IN4_MT,0);
+  delay(x);
 
-    t = pulseIn(echo,HIGH);
-    distancia = t/59;
+}
+void setright(){//setear orientacion de motores
+  digitalWrite(IN1_MT,0);
+  digitalWrite(IN2_MT,0);
+  digitalWrite(IN3_MT,1);
+  digitalWrite(IN4_MT,0);
+}
+void setleft(){//setear orientacion de motores
+  digitalWrite(IN1_MT,1);
+  digitalWrite(IN2_MT,0);
+  digitalWrite(IN3_MT,0);
+  digitalWrite(IN4_MT,0);
+}
+void right(){//girar a la derecha
+  if(orientacion==0){
+    while(z_rotation<90){
+      loop_mpu();  
+      setright();
+    }
+    stop(0);
+    orientacion=90;
+  }
+  else if(orientacion==90){
+    while(z_rotation<=179.9){
+      loop_mpu();
+      setright();
+    }
+    stop(0);
+    orientacion=180;    
+  }
+  else if(orientacion==180){
+    while(z_rotation>-90.1 && z_rotation<-89.9){
+      loop_mpu();
+      setright();
+    }
+    stop(0);
+    orientacion=-90;    
+  }
+  else if(orientacion==-90){
+    while(z_rotation<0){
+      loop_mpu();
+      setright();
+    }
+    stop(0);
+    orientacion=180;    
+  }  
 
-    if(distancia < 10){
-        return true;
-    }else{
-        return false;
+}
+void left(){//girar a la izquierda
+    if(orientacion==0){
+    while(z_rotation>-90){
+      loop_mpu();
+      setleft();
+    }
+    stop(0);
+    orientacion=-90;
+  }
+  else if(orientacion==-90){
+    while(z_rotation>=-179.9){
+      loop_mpu();
+      setleft();
+    }
+    stop(0);
+    orientacion=180;    
+  }
+  else if(orientacion==180){
+    while(z_rotation>90){
+      loop_mpu();
+      setleft();
+    }
+    stop(0);
+    orientacion=90;    
+  }
+  else if(orientacion==90){
+    while(z_rotation>0){
+      loop_mpu();
+      setright();
+    }
+    stop(0);
+    orientacion=90;    
+  }  
+
+}
+//////////////7funciones de MPU6050/////////////////////
+void loop_mpu(){
+  digitalWrite(8, !digitalRead(8));
+  digitalWrite(9, !digitalRead(9));
+  mpu.dmp_read_fifo(0);
+  z_rotation=xyz[0];
+}
+
+void PrintValues(int32_t *quat, uint16_t SpamDelay = 100) {
+  uint8_t WhoAmI;
+  Quaternion q;
+  VectorFloat gravity;
+  
+  spamtimer(SpamDelay) {
+    mpu.WHO_AM_I_READ_WHOAMI(&WhoAmI);
+    mpu.GetQuaternion(&q, quat);
+    mpu.GetGravity(&gravity, &q);
+    mpu.GetYawPitchRoll(ypr, &q, &gravity);
+    mpu.ConvertToDegrees(ypr, xyz);
+
+  }
+}
+
+void ChartValues(int32_t *quat, uint16_t SpamDelay = 100) {
+  Quaternion q;
+  VectorFloat gravity;
+  float ypr[3] = { 0, 0, 0 };
+  float xyz[3] = { 0, 0, 0 };
+  spamtimer(SpamDelay) {
+    mpu.GetQuaternion(&q, quat);
+    mpu.GetGravity(&gravity, &q);
+    mpu.GetYawPitchRoll(ypr, &q, &gravity);
+    mpu.ConvertToDegrees(ypr, xyz);
+  }
+}
+
+void PrintAllValues(int16_t *gyro, int16_t *accel, int32_t *quat, uint16_t SpamDelay = 100) {
+  Quaternion q;
+  VectorFloat gravity;
+  float ypr[3] = { 0, 0, 0 };
+  float xyz[3] = { 0, 0, 0 };
+  spamtimer(SpamDelay) {
+    mpu.GetQuaternion(&q, quat);
+    mpu.GetGravity(&gravity, &q);
+    mpu.GetYawPitchRoll(ypr, &q, &gravity);
+    mpu.ConvertToDegrees(ypr, xyz);
+  }
+}
+
+void ChartAllValues(int16_t *gyro, int16_t *accel, int32_t *quat, uint16_t SpamDelay = 100) {
+  Quaternion q;
+  VectorFloat gravity;
+  float ypr[3] = { 0, 0, 0 };
+  float xyz[3] = { 0, 0, 0 };
+  spamtimer(SpamDelay) {
+    mpu.GetQuaternion(&q, quat);
+    mpu.GetGravity(&gravity, &q);
+    mpu.GetYawPitchRoll(ypr, &q, &gravity);
+    mpu.ConvertToDegrees(ypr, xyz);
+  }
+}
+
+void PrintQuaternion(int32_t *quat, uint16_t SpamDelay = 100) {
+  Quaternion q;
+  spamtimer(SpamDelay) {
+    mpu.GetQuaternion(&q, quat);
+  }
+}
+
+void PrintEuler(int32_t *quat, uint16_t SpamDelay = 100) {
+  Quaternion q;
+  float euler[3];         
+  float eulerDEG[3];         
+  spamtimer(SpamDelay) {
+    mpu.GetQuaternion(&q, quat);
+    mpu.GetEuler(euler, &q);
+    mpu.ConvertToDegrees(euler, eulerDEG);
+  }
+}
+
+void PrintRealAccel(int16_t *accel, int32_t *quat, uint16_t SpamDelay = 100) {
+  Quaternion q;
+  VectorFloat gravity;
+  VectorInt16 aa, aaReal;
+  spamtimer(SpamDelay) {
+    mpu.GetQuaternion(&q, quat);
+    mpu.GetGravity(&gravity, &q);
+    mpu.SetAccel(&aa, accel);
+    mpu.GetLinearAccel(&aaReal, &aa, &gravity);
+  }
+}
+
+
+void PrintWorldAccel(int16_t *accel, int32_t *quat, uint16_t SpamDelay = 100) {
+  Quaternion q;
+  VectorFloat gravity;
+  VectorInt16 aa, aaReal, aaWorld;
+  spamtimer(SpamDelay) {
+    mpu.GetQuaternion(&q, quat);
+    mpu.GetGravity(&gravity, &q);
+    mpu.SetAccel(&aa, accel);
+    mpu.GetLinearAccel(&aaReal, &aa, &gravity);
+    mpu.GetLinearAccelInWorld(&aaWorld, &aaReal, &q);
+  }
+}
+
+void print_Values (int16_t *gyro, int16_t *accel, int32_t *quat) {
+  uint8_t Spam_Delay = 10; // Built in Blink without delay timer preventing Serial.print SPAM
+  PrintValues(quat, Spam_Delay);
+}
+void inicializarMPU6050(){
+  pinMode(7,OUTPUT);
+  Serial.begin(115200);
+  Serial.println(F("Start:"));
+  mpu.begin();
+  mpu.SetAddress(MPU6050_DEFAULT_ADDRESS);
+  mpu.Set_DMP_Output_Rate_Hz(10);           // Set the DMP output rate from 200Hz to 5 Minutes.
+  pinMode(8, OUTPUT);
+  pinMode(9, OUTPUT);
+  digitalWrite(8, HIGH);
+  digitalWrite(9, LOW);
+  mpu.CalibrateMPU().load_DMP_Image();// Does it all for you with Calibration
+  digitalWrite(8, LOW);
+  digitalWrite(9, HIGH);
+  mpu.CalibrateMPU().Enable_Reload_of_DMP(Three_Axis_Quaternions).load_DMP_Image();// Does it all for you with Calibration
+  mpu.on_FIFO(print_Values);
+}
+//Sensor Color !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+void getcolor(){//devuelve el color
+// 1:morado
+// 2:rosa
+// 3:amarillo
+// 4:negro
+  digitalWrite(s2,0);
+  digitalWrite(s3,0);
+  int red=pulseIn(outTCS,0);
+  delay(20);
+  
+  digitalWrite(s2,1);
+  digitalWrite(s3,1);
+  int green=pulseIn(outTCS,0);
+  delay(20);
+
+  digitalWrite(s2,0);
+  digitalWrite(s3,1);
+  int blue=pulseIn(outTCS,0);
+  delay(20);
+
+    if(green>red && green>blue && red>blue && blue<200){
+    // Serial.println("Color MORADO");
+    return 1;
     }
 
-}
-//detección de color
-int redM(){
-    digitalWrite(s2,LOW);
-    digitalWrite(s3, LOW);
+    else if(green>red && green>blue && blue>red){
+    // Serial.println("Color ROSA");
+    return 2;
 
-    int red = pulseIn(out, LOW);
+    }
 
-    return red; 
-}
-int blueM(){
-    digitalWrite(s2,LOW);
-    digitalWrite(s3, HIGH);
+    else if(blue>green && blue>red && green>red && red<200 ){
+    // Serial.println("Color AMARILLO");
+    return 3;
+    }
 
-    int blue = pulseIn(out, LOW);
-
-    return blue; 
-}
-int greenM(){
-    digitalWrite(s2,HIGH);
-    digitalWrite(s3, HIGH);
-
-    int green = pulseIn(out, LOW);
-
-    return green; 
-}
-int lecturaColor(){
-
-    int red = redM();
-    delay(200);
-    int blue = blueM();
-    delay(200);
-    int green = greenM();
-    delay(200);
-
-    // amarillo = 100.0% de rojo, 100.0% de verde y 0.0% de azul
-    // rosa = 91.76% de rojo, 53.73% de verde y 60.39% de azul
-    // morado = 34.12% de rojo, 13.73% de verde y 39.22% de azul
-
-    //0 -> rojo, 1-> amrillo, 2 -> rosa, 3 -> morado, 4-> negro, 5-> error
-    if (red > 250 && 10> blue && 10> green){
-        return 0;
-    }else if(red> 240 && green> 240 && 10> blue){
-        return 1;    
-    }else if (red > 250 && 140> green && green >120 && 150> blue && blue >130){
-        return 2;
-    }else if(90 > red && red > 60 && 30> green && green>10 && 90 > blue && blue> 60){
-        return 3;
-    }else if(10> red && 10> blue && 10> green){
+    else if(green>200 && blue>200 && red>200){
+    // Serial.println("Color NEGRO");
         return 4;
-    }else{
-        return 5;
-    }
-    
-}
-void setup(){
-    Serial.begin(9600);
-    //motores
-    pinMode(ENA_PIN, OUTPUT);
-    pinMode(IN1_PIN, OUTPUT);
-    pinMode(IN2_PIN, OUTPUT);
-    pinMode(IN3_PIN, OUTPUT);
-    pinMode(IN4_PIN, OUTPUT);
-
-    //infrarrojo
-    pinMode(infra1, INPUT);
-    pinMode(infra1, INPUT);
-
-
-    // ultrasonico
-    pinMode(trigger, OUTPUT);
-    pinMode(echo, INPUT);
-
-    //ledRGB
-    pinMode()
-
-    //sensor de color 
-    pinMode(s0,OUTPUT);  
-    pinMode(s1,OUTPUT);  
-    pinMode(s2,OUTPUT);  
-    pinMode(s3,OUTPUT);  
-    pinMode(out,INPUT);   
-    digitalWrite(s0,HIGH);  
-    digitalWrite(s1,HIGH);  
-
-    //botones
-    pinMode(botonA, INPUT);
-    pinMode(botonB, INPUT);
-    pinMode(botonC, INPUT);
-
-}
-void loop(){
-    int estadoA = digitalRead(botonA);
-    int estadoB = digitalRead(botonB);
-    int estadoC = digitalRead(botonC);
-
-    if (estadoA == HIGH){
-        while (end){
-
-        }
-
-    }else if(estadoB == HIGH){
-        while (end){
-
-        }
-    }else if(estadoC == HIGH){
-        while (end){
-
-        }
-    }else{
-        //regresar un color con el rgb
     }
 
-    
+    // else if(green<100 && blue<100 && red<100 && (green-red)<20 && (green-blue)<20){
+    //   Serial.println("Color Blanco");
+    // }
 
-
-
-
+    //else{
+        //Serial.println("Color no encontrado");
+    //}
 }
+void setColors(){//devuelve valores RGB
+    digitalWrite(s2,0);
+    digitalWrite(s3,0);
+    int red=pulseIn(outTCS,1);
+    delay(200);
+    
+    digitalWrite(s2,1);
+    digitalWrite(s3,1);
+    int green=pulseIn(outTCS,1);
+    delay(200);
+
+    digitalWrite(s2,0);
+    digitalWrite(s3,1);
+    int blue=pulseIn(outTCS,1);
+    delay(200);
+
+    Serial.print("Red:");
+    Serial.print(red);
+    Serial.print(" Green:");
+    Serial.print(green);
+    Serial.print(" Blue:");
+    Serial.println(blue);
+}
+
+//Zona A !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+bool foundPelota = false; 
+bool foundSalida = false;
+bool lineaEncontrada = true; 
+int posX = 0;
+int posY = 0;
+
+int lugares[3][3] = {{0,0,0}, {0,0,0}, {0,0,0}};
+int paredes[7][7] = {{0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}}; 
+
+//método de referencia para determinar encontrada
+void pelotaEncontrada(){
+    
+}
+bool lineaAbajo(){
+    
+    return false; 
+}
+bool paredAdelante(){
+    
+    return true;
+}
+
+void busquedaPelota() {
+    //{{0,0,0}, {0,0,0}, {0,0,0}}
+    // camino derecha
+    while (foundPelota == false && lineaEncontrada == false){
+        if(paredAdelante() == true){
+            girarDer();
+
+            if(lineaAbajo() == false && lineaEncontrada == false){
+                ahead(1);
+                left();
+            }else{
+                lineaEncontrada = true;
+                left();
+            }
+            if(lineaAbajo() == false && lineaEncontrada == false){
+                ahead(1);
+                left();
+            }else{
+                lineaEncontrada = true;
+                left();
+                ahead(1);
+                right();
+            }
+        }else{
+            pelotaEncontrada();
+        }
+    }
+    while (foundPelota == false){
+        if(paredAdelante() == true){
+            left();
+            ahead(1);
+            right();
+            ahead();
+            right();
+        }else{
+            pelotaEncontrada();
+        }
+    }
+}
+
+// MODIFICAR Y APLICAR UN MAPEO PARA SABER DOND ESTA
+void fuga(){
+    girarIzq();
+
+    while (paredAdelante() ){ // Detectar punto final
+        girarDer();
+        if (paredAdelante() == false){
+            adelante();
+            while (paredAdelante() == false){
+                girarIzq();
+                adelante();
+                
+            }
+            girarIzq();
+
+        }
+    }
+}
+//Zona B !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//Zona C !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
