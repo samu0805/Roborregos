@@ -17,23 +17,28 @@ const int ENA_MT1 = 50;
 const int ENA_MT2 = 51;
 const int IN1_MT = 52;
 const int IN2_MT = 53;
-const int IN3_MT = 4;
-const int IN4_MT = 5;
+const int IN3_MT = 48;
+const int IN4_MT = 49;
 int SPEED_MT=100;//velocidad inicial
+int SPPED_MT2=100;
 //encoders-variables de control
 const int encoder=3;
-const int encoder2;//por definir
+const int encoder2=2;//por definir
 int state;
+int state2;
 int c;
+int c2;
 int last;
+int last2;
 int frenado;//avance del motor en el frenado
-
+int frenado2;
 
 // Variables para PID
 double setpoint; // Valor deseado de velocidad
 double input;    // Valor actual de velocidad
 double output;   // Salida del PID
 unsigned long time1;
+int output1;
 
 
 // Parámetros del PID
@@ -58,10 +63,12 @@ void setup() {
   pinMode(ENA_MT1,OUTPUT);
   pinMode(ENA_MT2,OUTPUT);
   analogWrite(ENA_MT1,SPEED_MT);
-  analogWrite(ENA_MT2,SPEED_MT);
+  analogWrite(ENA_MT2,SPEED_MT2);
   //encoder
   pinMode(encoder,INPUT);
+  pinMode(encoder2,INPUT);
   attachInterrupt(1,interruption,RISING);//interrupcion para contar pulsos del encoder
+  attachInterrupt(0,interruption2,RISING);
 
     //PID
     //30cm en 1.5s=58RPM
@@ -93,16 +100,27 @@ void loop() {
 void calibracion_MT(){
   time1=millis();
   while((millis()-time1)<5000){
-    input = (c * 15); // Convertir pulsos a RPM (ajusta según tu encoder)
+    input = (c * 15); // Convertir pulsos a RPM 
     c = 0; // Reinicia el contador para la siguiente medición
 
     // Calcula el PID
     myPID.Compute();
 
-    // Controla el motor
+    // Controla el motor1
     analogWrite(ENA_MT1, output); // Establece la velocidad del motor
     digitalWrite(IN1_MT, HIGH); // Establece la dirección
     digitalWrite(IN2_MT, LOW);
+    output1=output;
+
+    input = (c2 * 15); // Convertir pulsos a RPM 
+    c2 = 0; // Reinicia el contador para la siguiente medición
+
+    // Calcula el PID
+    myPID.Compute();
+    // Controla el motor2
+    analogWrite(ENA_MT2, output); // Establece la velocidad del motor
+    digitalWrite(IN3_MT, HIGH); // Establece la dirección
+    digitalWrite(IN4_MT, LOW);
 
     // Imprime información en el monitor serie
     Serial.print("Setpoint: ");
@@ -117,12 +135,10 @@ void calibracion_MT(){
   }
   //calculo del avance del motor en el frenado
   c=0;
+  c2=0;
   while(c<=40){
     Serial.print("");
   }
-  stop(500);
-  frenado=c-40;
-  SPEED_MT=output;//establecer velocidad ideal
 }
 //funcion contabilizadora de pulsos del encoder
 void interruption(){
@@ -131,6 +147,15 @@ void interruption(){
     c++;
     last=state;
     Serial.println(c);
+  }
+}
+
+void interruption2(){
+  state2=digitalRead(encoder2);
+  if(state2!=last2){
+    c2++;
+    last2=state2;
+    Serial.println(c2);
   }
 }
 //
@@ -168,7 +193,7 @@ void stop(int x){
 }
 void setright(){//setear orientacion de motores
   digitalWrite(IN1_MT,0);
-  digitalWrite(IN2_MT,0);
+  digitalWrite(IN2_MT,1);//GIRAR SOBRE EL EJE
   digitalWrite(IN3_MT,1);
   digitalWrite(IN4_MT,0);
 }
@@ -176,7 +201,7 @@ void setleft(){//setear orientacion de motores
   digitalWrite(IN1_MT,1);
   digitalWrite(IN2_MT,0);
   digitalWrite(IN3_MT,0);
-  digitalWrite(IN4_MT,0);
+  digitalWrite(IN4_MT,1);
 }
 void right(){//girar a la derecha
   if(orientacion==0){
