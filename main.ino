@@ -174,6 +174,7 @@ void units(int x){//establece el numero de unidades que avanzara el robot 40puls
   }
   c=0;
 }
+
 void ahead(int x){//avance adelnate, la variable x indica cuantas unidades desea que avance
   digitalWrite(IN1_MT,1);
   digitalWrite(IN2_MT,0);
@@ -281,8 +282,9 @@ void left(){//girar a la izquierda
   }  
 
 }
+//Ultrasonico !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void distancia(){
-    digitalWrite(trig, LOW);
+  digitalWrite(trig, LOW);
   delayMicroseconds(2);
   
   digitalWrite(trig, HIGH);
@@ -299,6 +301,56 @@ void distancia(){
   // Serial.println(" cm");
   delay(100);
   return distance;//distance es variable global pero de pone un return por si se desea almacenar distancia en otra variable
+}
+//Sensor Color !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+void getcolor(){//devuelve el color
+// 1:morado
+// 2:rosa
+// 3:amarillo
+// 4:negro
+  digitalWrite(s2,0);
+  digitalWrite(s3,0);
+  int red=pulseIn(outTCS,0);
+  delay(20);
+  
+  digitalWrite(s2,1);
+  digitalWrite(s3,1);
+  int green=pulseIn(outTCS,0);
+  delay(20);
+
+  digitalWrite(s2,0);
+  digitalWrite(s3,1);
+  int blue=pulseIn(outTCS,0);
+  delay(20);
+
+    if(green>red && green>blue && red>blue && blue<200){
+    // Serial.println("Color MORADO");
+    return 1;
+    }
+
+    else if(green>red && green>blue && blue>red){
+    // Serial.println("Color ROSA");
+    return 2;
+
+    }
+
+    else if(blue>green && blue>red && green>red && red<200 ){
+    // Serial.println("Color AMARILLO");
+    return 3;
+    }
+
+    else if(green>200 && blue>200 && red>200){
+    // Serial.println("Color NEGRO");
+        return 4;
+    }
+
+    // else if(green<100 && blue<100 && red<100 && (green-red)<20 && (green-blue)<20){
+    //   Serial.println("Color Blanco");
+    // }
+
+    //else{
+        //Serial.println("Color no encontrado");
+    //}
 }
 //////////////7funciones de MPU6050/////////////////////
 void loop_mpu(){
@@ -427,56 +479,7 @@ void inicializarMPU6050(){
   mpu.CalibrateMPU().Enable_Reload_of_DMP(Three_Axis_Quaternions).load_DMP_Image();// Does it all for you with Calibration
   mpu.on_FIFO(print_Values);
 }
-//Sensor Color !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-void getcolor(){//devuelve el color
-// 1:morado
-// 2:rosa
-// 3:amarillo
-// 4:negro
-  digitalWrite(s2,0);
-  digitalWrite(s3,0);
-  int red=pulseIn(outTCS,0);
-  delay(20);
-  
-  digitalWrite(s2,1);
-  digitalWrite(s3,1);
-  int green=pulseIn(outTCS,0);
-  delay(20);
 
-  digitalWrite(s2,0);
-  digitalWrite(s3,1);
-  int blue=pulseIn(outTCS,0);
-  delay(20);
-
-    if(green>red && green>blue && red>blue && blue<200){
-    // Serial.println("Color MORADO");
-    return 1;
-    }
-
-    else if(green>red && green>blue && blue>red){
-    // Serial.println("Color ROSA");
-    return 2;
-
-    }
-
-    else if(blue>green && blue>red && green>red && red<200 ){
-    // Serial.println("Color AMARILLO");
-    return 3;
-    }
-
-    else if(green>200 && blue>200 && red>200){
-    // Serial.println("Color NEGRO");
-        return 4;
-    }
-
-    // else if(green<100 && blue<100 && red<100 && (green-red)<20 && (green-blue)<20){
-    //   Serial.println("Color Blanco");
-    // }
-
-    //else{
-        //Serial.println("Color no encontrado");
-    //}
-}
 void setColors(){//devuelve valores RGB
     digitalWrite(s2,0);
     digitalWrite(s3,0);
@@ -501,86 +504,242 @@ void setColors(){//devuelve valores RGB
     Serial.println(blue);
 }
 
-//Zona A !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-bool foundPelota = false; 
-bool foundSalida = false;
-bool lineaEncontrada = true; 
-int posX = 0;
-int posY = 0;
-
-int lugares[3][3] = {{0,0,0}, {0,0,0}, {0,0,0}};
-int paredes[7][7] = {{0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}, {0,0,0,0,0,0,0}}; 
-
-//método de referencia para determinar encontrada
-void pelotaEncontrada(){
+// ALGORITMOS --------------------------------------------------------------------------------------------------
+//General
+bool paredAdelante(){
+    //ver si hay una pared para entrar al centro
+    int x = distancia();
+    if(x < 10){
+      return true;
+    }else{
+      return false;
+    }
     
+}
+
+//Zona A !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+void pelotaEncontrada(){
+    //vuelta 180 y todo para atras
+    // sensor ultrasonico, hasta que d = 2cm, while d > 2cm
+    left();
+    left();
+    back(1);
+    /*
+    while(distancia() > 1){
+      back();
+    }
+    //cerrar servo
+    */
 }
 bool lineaAbajo(){
-    
+    //avanzar exactamente la mitad de la distancia y regresa y leer si hay línea
+    //leer con el detector de color 
+    // NECESITO INFRARROJO 
     return false; 
 }
-bool paredAdelante(){
-    
-    return true;
+void ZonaA(){
+  bool foundPelota = false; 
+  bool foundSalida = false;
+  bool lineaEncontrada = true; 
+  int countD= 0;
+  int countL=0;
+  //busquda pelota
+  while (foundPelota == false && lineaEncontrada == false){
+      if(paredAdelante() == true){
+          right();
+          if(lineaAbajo() == false && lineaEncontrada == false){
+              ahead(1);
+              left();
+          }else{
+              lineaEncontrada = true;
+              left();
+          }
+          if(lineaAbajo() == false && lineaEncontrada == false){
+              ahead(1);
+              left();
+          }else{
+              lineaEncontrada = true;
+              left();
+              ahead(1);
+              right();
+          }
+          countD++;
+      }else{
+          pelotaEncontrada();
+          foundPelota = true;
+      }
+  }
+  while (foundPelota == false){
+      if(paredAdelante() == true){
+          left();
+          ahead(1);
+          right();
+          ahead(1);
+          right();
+          countL++;
+      }else{
+          pelotaEncontrada();
+      } 
+  }
+  //fuga 
+  int pos = countD-countL;
+  ahead(1);
+  if(lineaEncontrada){
+      if(abs(pos)== 2){
+          ahead(1);
+      }
+      else if(pos == -3){
+          left();
+          ahead(1);
+          left();
+          ahead(1);
+          right();
+          ahead(1);
+      }
+      else if(pos == -1 || pos == 3){
+          right();
+          ahead(1);
+          right();
+          ahead(1);
+          left();
+          ahead(1); 
+      }
+      else{
+          //pos == 0;
+          right();
+          ahead(1);
+          right();
+          ahead(1);
+          ahead(1);
+          right();
+          ahead(1);
+          left();
+          ahead(1);
+      }
+  }else{
+      //peor caso
+      //pos == 1 -> true
+      // or pos == 0
+      int it = 0;
+      while (lineaEncontrada == false && foundSalida == false && it<2){
+          left();
+          if(lineaAbajo() == false && lineaEncontrada == false){
+              ahead(1);
+              left();
+          }else{
+              lineaEncontrada = true;
+              right();
+          }
+          if(lineaAbajo() == false && lineaEncontrada == false){
+              ahead(1);
+              left();
+          }else{
+              lineaEncontrada = true;
+              left();
+              ahead(1);
+              left();
+          }
+          if(paredAdelante() == true){
+              i++;   
+          }else{
+              ahead(1);
+              if(getcolor() == "rojo"){
+                  foundSalida = true;
+              }
+          }
+          right();
+      }
+      if (foundSalida == false){
+          //tanto 0 como 1 pueden hacer esto
+          right();
+          ahead(1);
+          right();
+          ahead(1);
+          ahead(1);
+          right();
+          ahead(1);
+          left();
+          if(paredAdelante() == true){
+              right();
+              ahead(1);
+              right();
+              ahead(1);
+              left();
+          }
+          if(paredAdelante() == false){
+              ahead(1);
+          }
+      }
+  }
 }
 
-void busquedaPelota() {
-    //{{0,0,0}, {0,0,0}, {0,0,0}}
-    // camino derecha
-    while (foundPelota == false && lineaEncontrada == false){
-        if(paredAdelante() == true){
-            girarDer();
-
-            if(lineaAbajo() == false && lineaEncontrada == false){
-                ahead(1);
-                left();
-            }else{
-                lineaEncontrada = true;
-                left();
-            }
-            if(lineaAbajo() == false && lineaEncontrada == false){
-                ahead(1);
-                left();
-            }else{
-                lineaEncontrada = true;
-                left();
-                ahead(1);
-                right();
-            }
-        }else{
-            pelotaEncontrada();
-        }
-    }
-    while (foundPelota == false){
-        if(paredAdelante() == true){
-            left();
-            ahead(1);
-            right();
-            ahead();
-            right();
-        }else{
-            pelotaEncontrada();
-        }
-    }
-}
-
-// MODIFICAR Y APLICAR UN MAPEO PARA SABER DOND ESTA
-void fuga(){
-    girarIzq();
-
-    while (paredAdelante() ){ // Detectar punto final
-        girarDer();
-        if (paredAdelante() == false){
-            adelante();
-            while (paredAdelante() == false){
-                girarIzq();
-                adelante();
-                
-            }
-            girarIzq();
-
-        }
-    }
-}
 //Zona B !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 //Zona C !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+//solo adelante y girar izq
+void girar(int directions[4][2]){
+    int tempx = directions[0][0];
+    int tempy = directions[0][1];
+    for (int i = 0; i< 3; i++){
+        directions[i][0] = directions[i+1][0];
+        directions[i][1] = directions[i+1][1];
+    }
+    directions[3][0] = tempx;
+    directions[3][1] = tempy;
+    left();
+}
+bool cuadroNegro(){
+  //hacerlo con infrarrojos
+  //SE PUEDE?? 
+  ahead(0.3);
+  int col= getcolor();
+  back(0.3);
+  if(col == 4){
+    return true; 
+  }else{
+    return false;
+  }
+}
+int colorDet(int colors[3]){
+  int col = getcolor() -1;
+  colors[col]++; 
+  return 0;
+}
+
+// arriba, izquierda, abajo, derecha
+void search(bool visited[5][3], int x, int y, int directions[4][2], int colors[3]){
+    colorDet(colors);
+    visited[x][y] = true;
+    for (int i = 0; i<4; i++){
+        int newX = x + directions[0][0];
+        int newY = y + directions[0][1];
+        if((newX >= 0 || newY >=0 || newX<=5 || newY <= 3) && (paredAdelante() == false)){
+            bool negro = cuadroNegro();
+            if(negro == false){
+                if(visited[newX][newY] == false){
+                    ahead(1);
+                    search(visited, newX, newY, directions, colors);
+                    back(1);
+                }
+            }else{
+                visited[newX][newY] = true; 
+            } 
+        }             
+        girar(directions);
+    }
+}
+
+
+void zonaB() {
+    //adelante, izquierda, atras, derecha
+    int directions[4][2] = {{0, 1}, {-1, 0}, {0, -1}, {1, 0}};
+
+    bool visited[5][3] = {{false}}; 
+    // punto inicial
+    int start_x = 0, start_y = 0;
+    int colors[3] = {0};
+
+    search(visited, start_x, start_y, directions, colors);
+}
+

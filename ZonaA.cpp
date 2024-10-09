@@ -1,5 +1,171 @@
 #include <iostream>
 
+void left(){}
+void right(){}
+void ahead(int x){}
+void back(int x){}
+void paredAdelante(){}
+//Zona A
+void pelotaEncontrada(){
+    //vuelta 180 y todo para atras
+    // sensor ultrasonico, hasta que d = 2cm, while d > 2cm
+    left();
+    left();
+    back(1);
+    /*
+    while(distancia() > 1){
+      back();
+    }
+    //cerrar servo
+    */
+}
+bool lineaAbajo(){
+    //avanzar exactamente la mitad de la distancia y regresa y leer si hay línea
+    //leer con el detector de color 
+    // NECESITO INFRARROJO 
+    return false; 
+}
+
+//Zona A !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//int matriz[]  = ;
+void ZonaA(){
+  bool foundPelota = false; 
+  bool foundSalida = false;
+  bool lineaEncontrada = true; 
+  int countD= 0;
+  int countL=0;
+  //busquda pelota
+  while (foundPelota == false && lineaEncontrada == false){
+      if(paredAdelante() == true){
+          right();
+          if(lineaAbajo() == false && lineaEncontrada == false){
+              ahead(1);
+              left();
+          }else{
+              lineaEncontrada = true;
+              left();
+          }
+          if(lineaAbajo() == false && lineaEncontrada == false){
+              ahead(1);
+              left();
+          }else{
+              lineaEncontrada = true;
+              left();
+              ahead(1);
+              right();
+          }
+          countD++;
+      }else{
+          pelotaEncontrada();
+          foundPelota = true;
+      }
+  }
+  while (foundPelota == false){
+      if(paredAdelante() == true){
+          left();
+          ahead(1);
+          right();
+          ahead(1);
+          right();
+          countL++;
+      }else{
+          pelotaEncontrada();
+      } 
+  }
+  //fuga 
+  int pos = countD-countL;
+  ahead(1);
+  if(lineaEncontrada){
+      if(abs(pos)== 2){
+          ahead(1);
+      }
+      else if(pos == -3){
+          left();
+          ahead(1);
+          left();
+          ahead(1);
+          right();
+          ahead(1);
+      }
+      else if(pos == -1 || pos == 3){
+          right();
+          ahead(1);
+          right();
+          ahead(1);
+          left();
+          ahead(1); 
+      }
+      else{
+          //pos == 0;
+          right();
+          ahead(1);
+          right();
+          ahead(1);
+          ahead(1);
+          right();
+          ahead(1);
+          left();
+          ahead(1);
+      }
+  }else{
+      //peor caso
+      //pos == 1 -> true
+      // or pos == 0
+      int it = 0;
+      while (lineaEncontrada == false && foundSalida == false && it<2){
+          left();
+          if(lineaAbajo() == false && lineaEncontrada == false){
+              ahead(1);
+              left();
+          }else{
+              lineaEncontrada = true;
+              right();
+          }
+          if(lineaAbajo() == false && lineaEncontrada == false){
+              ahead(1);
+              left();
+          }else{
+              lineaEncontrada = true;
+              left();
+              ahead(1);
+              left();
+          }
+          if(paredAdelante() == true){
+              i++;   
+          }else{
+              ahead(1);
+              if(getcolor() == "rojo"){
+                  foundSalida = true;
+              }
+          }
+          right();
+      }
+      if (foundSalida == false){
+          //tanto 0 como 1 pueden hacer esto
+          right();
+          ahead(1);
+          right();
+          ahead(1);
+          ahead(1);
+          right();
+          ahead(1);
+          left();
+          if(paredAdelante() == true){
+              right();
+              ahead(1);
+              right();
+              ahead(1);
+              left();
+          }
+          if(paredAdelante() == false){
+              ahead(1);
+          }
+      }
+  }
+}
+
+/*
+
 //int matriz[]  = ;
 bool foundPelota = false; 
 bool foundSalida = false;
@@ -32,7 +198,7 @@ void adelante(){
         }
         
     }
-    */
+    
     
 }
 void girarIzq(){
@@ -99,7 +265,7 @@ void busquedaPelota() {
         
     }
 }
-/*
+
 void fuga(){
     girarIzq();
 
@@ -116,7 +282,7 @@ void fuga(){
 
         }
     }
-}*/
+}
 
 
 void fuga(){
@@ -221,18 +387,18 @@ int main()
     adelante();
     busquedaPelota();
     fuga();
-    /*
+    
     posX = 1;
     lugares[posX][posY] = 1;
     //{{0,0,0}, {1,0,0}, {0,0,0}}
-    */
+    
     
 }
 
 
 
 //códigos karel prueba
-/*
+
 NUMERO 1: VARIABLES Y LETRAS MAL 
 void search()
 {
@@ -357,4 +523,5 @@ program() {
 }
 
 }
+
 */

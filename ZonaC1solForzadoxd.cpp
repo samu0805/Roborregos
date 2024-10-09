@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stack>
 using namespace std; 
 
 void adelante(){}
@@ -126,6 +127,8 @@ int fibRecursivo(int n){
     return fibRecursivo(n-1) + fibRecursiv(n-2)
 }
 */
+
+
 // arriba, izquierda, abajo, derecha
 int directions[4][2] = {{0, 1}, {-1, 0}, {0, -1}, {1, 0}};
 // 1 adelante, 2 girar izquierda, 3 atras, 4 girar derecha 
@@ -134,47 +137,70 @@ stack<int> st;
 int backstep[5][3]={{20}};
 
 void dfs(bool visited[5][3], int x, int y){
-    count = count +1;
-    if (visited[x][y]){
-        return;
-    }
+
     colorDet();
     visited[x][y] = true;
-    if (count < backstep[x][y]){
-        backstep[x][y] = count;
-    }
 
     for (int i = 0; i<4; i++){
-        if(paredAdelante() == false){
-            int newX = x + directions[0][0];
-            int newY = y + directions[0][1];
+        bool negro = cuadroNegro();
+        if(paredAdelante() == false &&  negro == false){
+            int newX = x + directions[i][0];
+            int newY = y + directions[i][1];
             if (cuadroNegro() == true){
                 visited[newX][newY] = true;
             }else{
-                for(int j = i; j>0; j--){
-                    girarDer();
-                }
-                switch(i) {
-                    case 0:
-                        move(0);
-                        break;
-                    case 1:
-                        girar(0);
-                        break;
-                    case 2:
-                        move(1);
-                        break;
-                    case 3: 
-                        girar(1);
-                    default:
-                        // code block
+                if(visited[newX][newY] == false){
+                    //regresar al norte
+                    for(int j = i; j>0; j--){
+                        girarDer();
                     }
-                dfs(visited,newX, newY);
+                    //dependiendo de cual ventana este abierta. 
+                    switch(i) {
+                        case 0:
+                            move(0); // adelante
+                            break;
+                        case 1:
+                            girar(0); // girar izquierda
+                            break;
+                        case 2:
+                            move(1); // atras
+                            break;
+                        case 3: 
+                            girar(1); // girar der
+                            break;
+                        default:
+                            // xd
+                        }
+                    dfs(visited,newX, newY);
+                    //regreso (movimiento contrario)
+                    switch(i) {
+                        case 0:
+                            move(1); // adelante
+                            break;
+                        case 1:
+                            girar(1); // girar izquierda
+                            break;
+                        case 2:
+                            move(0); // atras
+                            break;
+                        case 3: 
+                            girar(0); // girar der
+                            break;
+                        default:
+                            // xd
+                        }
+                        for(int j = i; j>0; j--){
+                            girarIzq();
+                        }
+                        
+                        //e
+                }
             }
         }else{
             girarIzq();
         }
     }
+    return; 
 }
 
 int main() {
@@ -186,7 +212,7 @@ int main() {
 
     
     // iniciar DFS
-    dfs(visited, start_x, start_y, count);
+    dfs(visited, start_x, start_y);
     
     // imprimir matriz con los valores de distancia
     for (int i = 0; i< 5; i++){
