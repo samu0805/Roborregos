@@ -48,9 +48,15 @@ double Kd = 0.001; // Ganancia derivativa
 
 // Inicializa el PID
 PID myPID(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
+//senosor ultrasonico
+const int trig = 9;
+const int echo = 10;
+long duration;
+long distance;
 
 int dt=500;
 int orientacion=0;
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
@@ -69,7 +75,9 @@ void setup() {
   pinMode(encoder2,INPUT);
   attachInterrupt(1,interruption,RISING);//interrupcion para contar pulsos del encoder
   attachInterrupt(0,interruption2,RISING);
-
+  //sensor ultrasonico
+  pinMode(trig, OUTPUT);  
+  pinMode(echo, INPUT); 
     //PID
     //30cm en 1.5s=58RPM
     //en 2s=43RPM
@@ -272,6 +280,25 @@ void left(){//girar a la izquierda
     orientacion=90;    
   }  
 
+}
+void distancia(){
+    digitalWrite(trig, LOW);
+  delayMicroseconds(2);
+  
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig, LOW);
+  
+  duration = pulseIn(echo, HIGH);
+  
+  // Calculamos la distancia (en cm)
+  distance = (duration * 0.034) / 2; 
+  
+  // Serial.print("Distancia: ");
+  // Serial.print(distance);
+  // Serial.println(" cm");
+  delay(100);
+  return distance;//distance es variable global pero de pone un return por si se desea almacenar distancia en otra variable
 }
 //////////////7funciones de MPU6050/////////////////////
 void loop_mpu(){
