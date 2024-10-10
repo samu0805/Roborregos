@@ -106,11 +106,6 @@ void loop() {
   left();
   stop(200); 
 
-  if (ZonaA){
-    adelante();
-    busquedaPelota();
-    fuga();
-  }
 }
 //CALIBRACION DE VELOCIDAD CON PID
 void calibracion_MT(){

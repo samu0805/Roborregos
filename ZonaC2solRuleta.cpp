@@ -18,21 +18,21 @@ void girar(int directions[4][2]){
     left();
 }
 bool cuadroNegro(){
-  //hacerlo con infrarrojos
-  //SE PUEDE?? 
-  ahead(0.3);
-  int col= getcolor();
-  back(0.3);
-  if(col == 4){
+    //hacerlo con infrarrojos
+    //SE PUEDE?? 
+    ahead(0.3);
+    int col= getcolor();
+    back(0.3);
+    if(col == 4){
     return true; 
-  }else{
-    return false;
-  }
+    }else{
+        return false;
+    }
 }
 int colorDet(int colors[3]){
-  int col = getcolor() -1;
-  colors[col]++; 
-  return 0;
+    int col = getcolor() -1;
+    colors[col]++; 
+    return 0;
 }
 
 // arriba, izquierda, abajo, derecha
@@ -44,12 +44,12 @@ void search(bool visited[5][3], int x, int y, int directions[4][2], int colors[3
         backstep[x][y] = count;
     }
     if(x== 4 && y == 2){
-       pathFound = true; 
+        pathFound = true; 
     }
     for (int i = 0; i<4; i++){
         int newX = x + directions[0][0];
         int newY = y + directions[0][1];
-        if((newX >= 0 || newY >=0 || newX<=5 || newY <= 3) && (paredAdelante() == false)){
+        if((newX >= 0 && newY >=0 && newX<=5 && newY <= 3) && (paredAdelante() == false)){
             bool negro = cuadroNegro();
             if(negro == false){
                 if(visited[newX][newY] == false){
@@ -69,7 +69,7 @@ void search(bool visited[5][3], int x, int y, int directions[4][2], int colors[3
     }
 }
 void fuga(int count, int x, int y, int Mcolor, bool foundColor, int directions[4][2], int backstep[5][3]){
-    for(int i = 0; i < count-1; i++){
+    for(int i = 0; i < count; i++){
         if(!foundColor){
             if(getcolor() == Mcolor){
                 //encenderLed
@@ -80,7 +80,7 @@ void fuga(int count, int x, int y, int Mcolor, bool foundColor, int directions[4
         for (int j = 0; j < 4; j++){
             int newX = x + directions[0][0];
             int newY = y + directions[0][1];
-            if (backstep[newX][newY] == i+1){
+            if (newX >= 0 && newY >= 0 && newX < 5 && newY < 3 && backstep[newX][newY] == i+1){
                 ahead(1);
                 j=4;
             }else{

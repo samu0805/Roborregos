@@ -4,7 +4,8 @@ void left(){}
 void right(){}
 void ahead(int x){}
 void back(int x){}
-void paredAdelante(){}
+bool paredAdelante(){ return true;}
+int getcolor(){return 1;}
 //Zona A
 void pelotaEncontrada(){
     //vuelta 180 y todo para atras
@@ -14,7 +15,7 @@ void pelotaEncontrada(){
     back(1);
     /*
     while(distancia() > 1){
-      back();
+        back();
     }
     //cerrar servo
     */
@@ -35,133 +36,133 @@ void ZonaA(){
   int countD= 0;
   int countL=0;
   //busquda pelota
-  while (foundPelota == false && lineaEncontrada == false){
-      if(paredAdelante() == true){
-          right();
-          if(lineaAbajo() == false && lineaEncontrada == false){
-              ahead(1);
-              left();
-          }else{
-              lineaEncontrada = true;
-              left();
-          }
-          if(lineaAbajo() == false && lineaEncontrada == false){
-              ahead(1);
-              left();
-          }else{
-              lineaEncontrada = true;
-              left();
-              ahead(1);
-              right();
-          }
-          countD++;
-      }else{
-          pelotaEncontrada();
-          foundPelota = true;
-      }
-  }
-  while (foundPelota == false){
-      if(paredAdelante() == true){
-          left();
-          ahead(1);
-          right();
-          ahead(1);
-          right();
-          countL++;
-      }else{
-          pelotaEncontrada();
-      } 
-  }
-  //fuga 
-  int pos = countD-countL;
-  ahead(1);
-  if(lineaEncontrada){
-      if(abs(pos)== 2){
-          ahead(1);
-      }
-      else if(pos == -3){
-          left();
-          ahead(1);
-          left();
-          ahead(1);
-          right();
-          ahead(1);
-      }
-      else if(pos == -1 || pos == 3){
-          right();
-          ahead(1);
-          right();
-          ahead(1);
-          left();
-          ahead(1); 
-      }
-      else{
-          //pos == 0;
-          right();
-          ahead(1);
-          right();
-          ahead(1);
-          ahead(1);
-          right();
-          ahead(1);
-          left();
-          ahead(1);
-      }
-  }else{
-      //peor caso
-      //pos == 1 -> true
-      // or pos == 0
-      int it = 0;
-      while (lineaEncontrada == false && foundSalida == false && it<2){
-          left();
-          if(lineaAbajo() == false && lineaEncontrada == false){
-              ahead(1);
-              left();
-          }else{
-              lineaEncontrada = true;
-              right();
-          }
-          if(lineaAbajo() == false && lineaEncontrada == false){
-              ahead(1);
-              left();
-          }else{
-              lineaEncontrada = true;
-              left();
-              ahead(1);
-              left();
-          }
-          if(paredAdelante() == true){
-              i++;   
-          }else{
-              ahead(1);
-              if(getcolor() == "rojo"){
-                  foundSalida = true;
-              }
-          }
-          right();
-      }
-      if (foundSalida == false){
+    while (foundPelota == false && lineaEncontrada == false){
+        if(paredAdelante() == true){
+            right();
+            if(lineaAbajo() == false && lineaEncontrada == false){
+                ahead(1);
+                left();
+            }else{
+                lineaEncontrada = true;
+                left();
+            }
+            if(lineaAbajo() == false && lineaEncontrada == false){
+                ahead(1);
+                left();
+            }else{
+                lineaEncontrada = true;
+                left();
+                ahead(1);
+                right();
+            }
+            countD++;
+        }else{
+            pelotaEncontrada();
+            foundPelota = true;
+        }
+    }
+    while (foundPelota == false){
+        if(paredAdelante() == true){
+            left();
+            ahead(1);
+            right();
+            ahead(1);
+            right();
+            countL++;
+        }else{
+            pelotaEncontrada();
+        } 
+    }
+    //fuga 
+    int pos = countD-countL;
+    ahead(1);
+    if(lineaEncontrada){
+        if(abs(pos)== 2){
+            ahead(1);
+        }
+        else if(pos == -3){
+            left();
+            ahead(1);
+            left();
+            ahead(1);
+            right();
+            ahead(1);
+        }
+        else if(pos == -1 || pos == 3){
+            right();
+            ahead(1);
+            right();
+            ahead(1);
+            left();
+            ahead(1); 
+        }
+        else{
+            //pos == 0;
+            right();
+            ahead(1);
+            right();
+            ahead(1);
+            ahead(1);
+            right();
+            ahead(1);
+            left();
+            ahead(1);
+        }
+    }else{
+        //peor caso
+        //pos == 1 -> true
+        // or pos == 0
+        int it = 0;
+        while (lineaEncontrada == false && foundSalida == false && it<2){
+            left();
+            if(lineaAbajo() == false && lineaEncontrada == false){
+                ahead(1);
+                left();
+            }else{
+                lineaEncontrada = true;
+                right();
+            }
+            if(lineaAbajo() == false && lineaEncontrada == false){
+                ahead(1);
+                left();
+            }else{
+                lineaEncontrada = true;
+                left();
+                ahead(1);
+                left();
+            }
+            if(paredAdelante() == true){
+                it++;   
+            }else{
+                ahead(1);
+                if(getcolor() == 5){ // "rojo
+                    foundSalida = true;
+                }
+            }
+            right();
+        }
+        if (foundSalida == false){
           //tanto 0 como 1 pueden hacer esto
-          right();
-          ahead(1);
-          right();
-          ahead(1);
-          ahead(1);
-          right();
-          ahead(1);
-          left();
-          if(paredAdelante() == true){
-              right();
-              ahead(1);
-              right();
-              ahead(1);
-              left();
-          }
-          if(paredAdelante() == false){
-              ahead(1);
-          }
-      }
-  }
+            right();
+            ahead(1);
+            right();
+            ahead(1);
+            ahead(1);
+            right();
+            ahead(1);
+            left();
+            if(paredAdelante() == true){
+                right();
+                ahead(1);
+                right();
+                ahead(1);
+                left();
+            }
+            if(paredAdelante() == false){
+                ahead(1);
+            }
+        }
+    }
 }
 
 /*

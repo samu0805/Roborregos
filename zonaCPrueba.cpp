@@ -1,10 +1,7 @@
 //Zona C !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-void left(){}
-void right(){}
-void ahead(int x){}
-void back(int x){}
-bool paredAdelante(){return true;}
-int getcolor(){return 1;}
+#include <iostream>
+using namespace std;
+
 //solo adelante y girar izq
 void girar(int directions[4][2]){
     int tempx = directions[0][0];
@@ -15,51 +12,27 @@ void girar(int directions[4][2]){
     }
     directions[3][0] = tempx;
     directions[3][1] = tempy;
-    left();
-}
-bool cuadroNegro(){
-  //hacerlo con infrarrojos
-  //SE PUEDE?? 
-  ahead(0.3);
-  int col= getcolor();
-  back(0.3);
-  if(col == 4){
-    return true; 
-  }else{
-    return false;
-  }
-}
-int colorDet(int colors[3]){
-  int col = getcolor() -1;
-  colors[col]++; 
-  return 0;
 }
 
 // arriba, izquierda, abajo, derecha
-void search(bool visited[5][3], int x, int y, int directions[4][2], int colors[3], int backstep[5][3], int count, bool& pathFound){
-    colorDet(colors);
+void search(bool visited[5][3], int x, int y, int directions[4][2], int backstep[5][3], int& count, bool& pathFound){
     visited[x][y] = true;
     if(!pathFound){
         count++;
         backstep[x][y] = count;
     }
     if(x== 4 && y == 2){
-       pathFound = true; 
+        pathFound = true; 
     }
     for (int i = 0; i<4; i++){
         int newX = x + directions[0][0];
         int newY = y + directions[0][1];
-        if((newX >= 0 || newY >=0 || newX<=5 || newY <= 3) && (paredAdelante() == false)){
-            bool negro = cuadroNegro();
-            if(negro == false){
-                if(visited[newX][newY] == false){
-                    ahead(1);
-                    search(visited, newX, newY, directions, colors, backstep, count, pathFound);
-                    back(1);
-                }
-            }else{
-                visited[newX][newY] = true; 
-            } 
+        if(newX >= 0 && newY >=0 && newX<=4 && newY <= 2){
+            if(visited[newX][newY] == false){
+                cout << "Visitando " << newX << ", " << newY << endl;
+                search(visited, newX, newY, directions, backstep, count, pathFound);
+                cout << "Retrocediendo a: " << x << ", " << y << endl; 
+            }
         }             
         girar(directions);
     }
@@ -69,23 +42,26 @@ void search(bool visited[5][3], int x, int y, int directions[4][2], int colors[3
     }
 }
 void fuga(int count, int x, int y, int directions[4][2], int backstep[5][3]){
-    for(int i = 0; i < count-1; i++){
+    for(int i = 0; i < count; i++){
         for (int j = 0; j < 4; j++){
             int newX = x + directions[0][0];
             int newY = y + directions[0][1];
-            if (backstep[newX][newY] == i+1){
-                ahead(1);
-                j=0;
+            if (newX >= 0 && newY >= 0 && newX < 5 && newY < 3 && backstep[newX][newY] == i+1){
+                x = newX;
+                y = newY;
+                cout << "Visitando " << x << ", " << y << endl;
+                j=4;
             }else{
                 girar(directions);
             }
         }
     }
-    ahead(1);
 }
-void zonaB() {
+int main() {
     //adelante, izquierda, atras, derecha
     int directions[4][2] = {{0, 1}, {-1, 0}, {0, -1}, {1, 0}};
+    
+    int maze[5][3] = {{0}};
 
     bool visited[5][3] = {{false}}; 
     int backstep[5][3] = {{30}}; 
@@ -95,7 +71,7 @@ void zonaB() {
     int colors[3] = {0};
 
     bool pathFound = false;
-    search(visited, start_x, start_y, directions, colors, backstep, count, pathFound);
-
+    search(visited, start_x, start_y, directions, backstep, count, pathFound);
+    cout << "Count: "<< count << ", " << "Path Found: " << pathFound << endl;
     fuga(count, start_x, start_y, directions, backstep);
 }
