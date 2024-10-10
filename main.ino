@@ -20,7 +20,7 @@ const int IN2_MT = 53;
 const int IN3_MT = 48;
 const int IN4_MT = 49;
 int SPEED_MT=100;//velocidad inicial
-int SPPED_MT2=100;
+int SPEED_MT2=100;
 //encoders-variables de control
 const int encoder=3;
 const int encoder2=2;//por definir
@@ -53,6 +53,10 @@ const int trig = 9;
 const int echo = 10;
 long duration;
 long distance;
+//senosres infrarrojos
+const int infrared1=23;
+const int infrared2=24;
+int a=0;
 
 int dt=500;
 int orientacion=0;
@@ -78,6 +82,10 @@ void setup() {
   //sensor ultrasonico
   pinMode(trig, OUTPUT);  
   pinMode(echo, INPUT); 
+  //sensores infrarrojos
+  pinMode(infrared1,INPUT);
+  pinMode(infrared2,INPUT);
+  attachInterrupt(2,interruption3,RISING);
     //PID
     //30cm en 1.5s=58RPM
     //en 2s=43RPM
@@ -167,15 +175,35 @@ void interruption2(){
   }
 }
 //
-void units(int x){//establece el numero de unidades que avanzara el robot 40pulsos=rev(20.7cm), 58pulsos=30cm
+void interruption3(){
+  a=1;
+}
+//
+void units(float x){//establece el numero de unidades que avanzara el robot 40pulsos=rev(20.7cm), 58pulsos=30cm
+  int pulback=0;
   c=0;
   while(c<=x*(58-frenado)){
     Serial.print("");
+    if(a==1){
+      break;
   }
+  }
+  if(a==1){
+    stop(100);
+    pulback=c;
+    c=0;
+    digitalWrite(IN1_MT,0);
+    digitalWrite(IN2_MT,1);
+    digitalWrite(IN3_MT,0);
+    digitalWrite(IN4_MT,1);
+    while(c<=(pulback-frenado)){
+      Serial.print("");
+    }
+  a=0;
   c=0;
 }
-
-void ahead(int x){//avance adelnate, la variable x indica cuantas unidades desea que avance
+}
+void ahead(float x){//avance adelnate, la variable x indica cuantas unidades desea que avance
   digitalWrite(IN1_MT,1);
   digitalWrite(IN2_MT,0);
   digitalWrite(IN3_MT,1);
@@ -184,7 +212,7 @@ void ahead(int x){//avance adelnate, la variable x indica cuantas unidades desea
   stop(0);
 }
 
-void back(int x){//retroceso
+void back(float x){//retroceso
   digitalWrite(IN1_MT,0);
   digitalWrite(IN2_MT,1);
   digitalWrite(IN3_MT,0);
