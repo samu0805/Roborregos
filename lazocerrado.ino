@@ -14,31 +14,32 @@ Simple_MPU6050 mpu(Six_Axis_Quaternions);
 float z_rotation;//angulo de rotacion
 float ypr[3] = { 0, 0, 0 };
 float xyz[3] = { 0, 0, 0 };
+//todos los pines nombrados con numero par son lado derecho e impares izquierdp
 //Motores
-const int ENA_MT1 = 4;
-const int ENA_MT2 = 5;
-const int ENA_MT3 = 6;
-const int ENA_MT4 = 7;
-const int IN1_MT = 26;
+const int ENA_MT1 = 4;//atras derecha
+const int ENA_MT2 = 5;//atras izq
+const int ENA_MT3 = 6;//adelante deracha
+const int ENA_MT4 = 7;//adelante izq
+const int IN1_MT = 26;//atras der
 const int IN2_MT = 27;
-const int IN3_MT = 28;
+const int IN3_MT = 28;//atras izq
 const int IN4_MT = 29;
 
-const int IN5_MT = 30;
+const int IN5_MT = 30;//adelante deracha
 const int IN6_MT = 31;
-const int IN7_MT = 32;
+const int IN7_MT = 32;//adelante izq
 const int IN8_MT = 33;
 int SPEED_MT=140;//velocidad inicial
 int SPEED_MT2=140;
 //servo
 Servo servo;
 //encoders-variables de control
-const int encoder=3; // Izquierdo
-const int encoder2=2;//por definir Derecho
-int c;
-int c2;
-int cplus;
-int cplus2;
+const int encoder=2; // der
+const int encoder2=3;//izq
+int c;//contador de pulsos der
+int c2;//contador de pulsos izq
+int cplus;//contador de pulsos der
+int cplus2;//contador de pulsos izq
 int frenado;//avance del motor en el frenado
 int frenado2;
 int error_giro=5;
@@ -56,8 +57,8 @@ double Kd = 0.01; // Ganancia derivativa
 // Inicializa el PID
 PID myPID(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 //ultrasonico
-const int trig = 9;
-const int echo = 10;
+const int trig = 8;
+const int echo = 9;
 long duration;
 long distance;
 
@@ -68,8 +69,8 @@ const int s2=36;
 const int s3=37;
 const int outTCS=38;
 // infrarrojo
-const int infrared1=24;
-const int infrared2=25;
+const int infrared1=24;//der
+const int infrared2=25;//izq
 
 int dt=500;
 int orientacion=0;
@@ -114,10 +115,16 @@ void setup() {
   digitalWrite(s1,0); 
     //PID
   myPID.SetMode(AUTOMATIC);
+  inicializarMPU6050();
 }
-
 void loop() {
   ahead();
+  stop(1000);
+  setright();
+  stop(1000);
+  ahead();
+  stop(1000);
+  left();
   stop(1000);
 }
 
@@ -134,7 +141,7 @@ void interruption2() {
   Serial.println(c);
 }
 int corregir_giro(){
-  int kerror=7;
+  int kerror=9;
   int corregir;
   loop_mpu();
   if(z_rotation<=-179.9 && z_rotation>-170){
@@ -180,7 +187,6 @@ void back(){
   c2=0;
 }
 void right(){
-  inicializarMPU6050();
   setright();
   while (true) {
     loop_mpu();
@@ -227,7 +233,6 @@ void right(){
   c2=0;
 }
 void left(){
-  inicializarMPU6050();
   setleft();
   while (true) {
     loop_mpu();
@@ -292,17 +297,6 @@ void PID(){
 }
 
 void setahead(){//avance adelnate, la variable x indica cuantas unidades desea que avance
-  digitalWrite(IN1_MT,1);
-  digitalWrite(IN2_MT,0);
-  digitalWrite(IN3_MT,0);
-  digitalWrite(IN4_MT,1);
-  digitalWrite(IN5_MT,1);
-  digitalWrite(IN6_MT,0);
-  digitalWrite(IN7_MT,1);
-  digitalWrite(IN8_MT,0);
-}
-
-void setback(){//retroceso
   digitalWrite(IN1_MT,0);
   digitalWrite(IN2_MT,1);
   digitalWrite(IN3_MT,0);
@@ -311,6 +305,17 @@ void setback(){//retroceso
   digitalWrite(IN6_MT,1);
   digitalWrite(IN7_MT,0);
   digitalWrite(IN8_MT,1);
+}
+
+void setback(){//retroceso
+  digitalWrite(IN1_MT,1);
+  digitalWrite(IN2_MT,0);
+  digitalWrite(IN3_MT,0);
+  digitalWrite(IN4_MT,1);
+  digitalWrite(IN5_MT,1);
+  digitalWrite(IN6_MT,0);
+  digitalWrite(IN7_MT,1);
+  digitalWrite(IN8_MT,0);
 }
 void stop(int x){
   digitalWrite(IN1_MT,0);
