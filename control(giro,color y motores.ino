@@ -170,7 +170,7 @@ else if(green>200 && blue>200 && red>200){
   // Serial.println("Color NEGRO");
     return 4;
 }
-
+}
 // else if(green<100 && blue<100 && red<100 && (green-red)<20 && (green-blue)<20){
 //   Serial.println("Color Blanco");
 // }

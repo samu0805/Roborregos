@@ -28,8 +28,8 @@ int cantLin(){
     }else if(izq == true && der == true){
         // girar derecha hasta emparejarse con la linea de la derecha
         search();
-    }else{
         
+    }else{
         avanzar();
     }
 }
