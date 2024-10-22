@@ -19,22 +19,22 @@ const int ENA_MT1 = 4;
 const int ENA_MT2 = 5;
 const int ENA_MT3 = 6;
 const int ENA_MT4 = 7;
-const int IN1_MT = 52;
-const int IN2_MT = 53;
-const int IN3_MT = 48;
-const int IN4_MT = 49;
+const int IN1_MT = 26;
+const int IN2_MT = 27;
+const int IN3_MT = 28;
+const int IN4_MT = 29;
 
-const int IN5_MT = 26;
-const int IN6_MT = 27;
-const int IN7_MT = 29;
-const int IN8_MT = 28;
+const int IN5_MT = 30;
+const int IN6_MT = 31;
+const int IN7_MT = 32;
+const int IN8_MT = 33;
 int SPEED_MT=140;//velocidad inicial
 int SPEED_MT2=140;
 //servo
 Servo servo;
 //encoders-variables de control
-const int encoder=3;
-const int encoder2=2;//por definir
+const int encoder=3; // Izquierdo
+const int encoder2=2;//por definir Derecho
 int c;
 int c2;
 int cplus;
@@ -62,11 +62,14 @@ long duration;
 long distance;
 
 //sensor de color
-const int s0=41;
-const int s1=42;
-const int s2=43;
-const int s3=45;
-const int outTCS=46;
+const int s0=34;
+const int s1=35;
+const int s2=36;
+const int s3=37;
+const int outTCS=38;
+// infrarrojo
+const int infrared1=24;
+const int infrared2=25;
 
 int dt=500;
 int orientacion=0;
