@@ -33,7 +33,7 @@ void search(bool visited[2][3], int x, int y, int directions[4][2], int backstep
     for (int i = 0; i<4; i++){
         int newX = x + directions[0][0];
         int newY = y + directions[0][1];
-        if((newX >= 0 && newY >=0 && newX<=2 && newY <= 3) && (paredAdelante() == false)){
+        if((newX >= 0 && newY >=0 && newX<=2 && newY <= 3)){
             if(visited[newX][newY] == false){
                 ahead();
                 search(visited, newX, newY, directions, colors, backstep, count, pathFound);
