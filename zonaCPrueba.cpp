@@ -1,7 +1,7 @@
+
 //Zona C !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #include <iostream>
 using namespace std;
-
 
 //Zona C !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 bool paredAdelante(){
@@ -17,11 +17,13 @@ void girar(int directions[4][2]){
     }
     directions[3][0] = tempx;
     directions[3][1] = tempy;
-    left();
+    right();
+    c = 0;
+    c2 = 0;
 }
 
 // arriba, izquierda, abajo, derecha
-void search(bool visited[2][3], int x, int y, int directions[4][2], int backstep[5][3], int& count, bool& pathFound){
+void search(bool visited[2][2], int x, int y, int directions[4][2], int backstep[5][3], int& count, bool& pathFound){
     visited[x][y] = true;
     if(!pathFound){
         count++;
@@ -33,11 +35,13 @@ void search(bool visited[2][3], int x, int y, int directions[4][2], int backstep
     for (int i = 0; i<4; i++){
         int newX = x + directions[0][0];
         int newY = y + directions[0][1];
-        if((newX >= 0 && newY >=0 && newX<=2 && newY <= 3)){
+        if((newX >= 0 && newY >=0 && newX< 2 && newY < 2)){
             if(visited[newX][newY] == false){
                 ahead();
-                search(visited, newX, newY, directions, colors, backstep, count, pathFound);
-                back();
+                c = 0;
+                c2 = 0;
+                search(visited, newX, newY, directions, backstep, count, pathFound);
+                back(38);
             }             
             girar(directions);
         }
@@ -47,12 +51,12 @@ void search(bool visited[2][3], int x, int y, int directions[4][2], int backstep
         }
     }
 }
-void fuga(int count, int x, int y, int directions[4][2], int backstep[5][3]){
+void fuga(int count, int x, int y, int directions[4][2], int backstep[2][2]){
     for(int i = 0; i < count; i++){
         for (int j = 0; j < 4; j++){
             int newX = x + directions[0][0];
             int newY = y + directions[0][1];
-            if (newX >= 0 && newY >= 0 && newX < 5 && newY < 3 && backstep[newX][newY] == i+1){
+            if (newX >= 0 && newY >= 0 && newX < 2 && newY < 2 && backstep[newX][newY] == i+1){
                 ahead();
                 j=4;
             }else{
@@ -66,8 +70,8 @@ void zonaC() {
     //adelante, izquierda, atras, derecha
     int directions[4][2] = {{0, 1}, {-1, 0}, {0, -1}, {1, 0}};
 
-    bool visited[2][3] = {{false}}; 
-    int backstep[2][3] = {{30}}; 
+    bool visited[2][2] = {{false}}; 
+    int backstep[2][2] = {{30}}; 
     int count = 0;
     // punto inicial
     int start_x = 0, start_y = 0;
