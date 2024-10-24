@@ -16,7 +16,7 @@ float ypr[3] = { 0, 0, 0 };
 float xyz[3] = { 0, 0, 0 };
 //todos los pines nombrados con numero par son lado derecho e impares izquierdp
 //Motores
-const int ENA_MT1 = 4;//atras derecha
+const int ENA_MT1 = 10;//atras derecha
 const int ENA_MT2 = 5;//atras izq
 const int ENA_MT3 = 6;//adelante deracha
 const int ENA_MT4 = 7;//adelante izq
@@ -29,8 +29,8 @@ const int IN5_MT = 30;//adelante deracha
 const int IN6_MT = 31;
 const int IN7_MT = 32;//adelante izq
 const int IN8_MT = 33;
-int SPEED_MT=140;//velocidad inicial
-int SPEED_MT2=140;
+int SPEED_MT=120;//velocidad inicial
+int SPEED_MT2=120;
 //servo
 Servo servo;
 //encoders-variables de control
@@ -116,19 +116,30 @@ void setup() {
     //PID
   myPID.SetMode(AUTOMATIC);
   inicializarMPU6050();
+  pinMode(infrared1,INPUT);
+  pinMode(infrared2,INPUT);
 }
 void loop() {
   ahead();
-  stop(1000);
-  setright();
-  stop(1000);
-  ahead();
-  stop(1000);
-  left();
-  stop(1000);
+  stop(2000);
+  // ahead();
+  // stop(2000);
+  // ahead();
+  // stop(8000);
+  // ahead();
+  // stop(2000);
+  //PID();
 }
-
-
+// void ajustar_velocidad(){
+//   time1=millis();
+//   while(millis()-time1<4000);
+//   int kvar=5;
+//   SPEED_MT=speed+5(8-c);
+//   speed2=speed2+5(8-c2);
+//   c=0;
+//   c2=0;
+//   delay(200);
+// }
 //funcion contabilizadora de pulsos del encoder
 void interruption() {
   cplus++;
@@ -141,7 +152,7 @@ void interruption2() {
   Serial.println(c);
 }
 int corregir_giro(){
-  int kerror=9;
+  int kerror=14;
   int corregir;
   loop_mpu();
   if(z_rotation<=-179.9 && z_rotation>-170){
@@ -152,33 +163,69 @@ int corregir_giro(){
   }
   return corregir;
 }
+
 void ahead(){
-  setahead();
-  while (true) {
-    // Mapeo de velocidad basado en el contador de pulsos
-    int corregir=corregir_giro();
-    SPEED_MT = map(c, 0, 30, 120-corregir,60);
-    SPEED_MT2 = map(c2, 0, 30, 120+corregir,60);
-    set_speed(); 
-    //PID();
-    if (c >= 38 ) {// Para detener el bucle cuando se alcanzan los 38 pulsos
+  while(true){  
+    delay(100);
+    loop_mpu();
+    if(z_rotation>orientacion){
+      setright();
+    }
+    else if(z_rotation<orientacion){
+      setleft();
+    }
+    if(z_rotation<orientacion+1 && z_rotation>orientacion-1){
+      stop(100);
+      Serial.println(z_rotation);
       break;
     }
   }
-  stop(0);
+  
+  setahead();
+  while (true) {
+    // Mapeo de velocidad basado en el contador de pulsos
+    //int corregir=corregir_giro();
+    SPEED_MT = map(c, 0, 35, 140/*+corregir*/,100);
+    SPEED_MT2 = map(c2, 0, 35, 140/*-corregir*/,100);
+    set_speed(); 
+    //PID();
+    if (c >= 38 ) {// Para detener el bucle cuando se alcanzan los 38 pulsos
+      digitalWrite(IN1_MT,0);
+      digitalWrite(IN2_MT,0);
+      digitalWrite(IN3_MT,0);
+      digitalWrite(IN4_MT,0);
+    }
+    if(c2>=38){
+      digitalWrite(IN5_MT,0);
+      digitalWrite(IN6_MT,0);
+      digitalWrite(IN7_MT,0);
+      digitalWrite(IN8_MT,0);
+    }
+    if(c >= 38 || c2>=38){
+      break;
+    }
+    bool linea=lineaAbajo();
+    if(linea==true){
+      break;
+    }
+  }
+  stop(400);
   c = 0;
   c2=0;
 }
-void back(){
+void back(int pul){
   setback();
+  c=0;
+  c2=0;
   while (true) {
     // Mapeo de velocidad basado en el contador de pulsos
-    int corregir=corregir_giro();
-    SPEED_MT = map(c, 0, 30, 120-corregir,60);
-    SPEED_MT2 = map(c2, 0, 30, 120+corregir,60); 
+    //int corregir=corregir_giro();
+    Serial.println("holaaaaaaaaaaaaaaaaaaaaaaa");
+    SPEED_MT = map(c, 0, 35, 140/*-corregir*/,100);
+    SPEED_MT2 = map(c2, 0, 35, 140/*corregir*/,100); 
     set_speed();
     //PID();
-    if (c >= 38 ) {// Para detener el bucle cuando se alcanzan los 38 pulsos
+    if (c >= pul ) {// Para detener el bucle cuando se alcanzan los 38 pulsos
       break;
     }
   }
@@ -238,14 +285,14 @@ void left(){
     loop_mpu();
     // Mapeo de velocidad basado giroscopio
     if(orientacion==0){ 
-      SPEED_MT = map(z_rotation, 0, (-90+error_giro), 130,70);
+      SPEED_MT = map(z_rotation, 0, (-90+error_giro), 140,80);
       if (z_rotation <= -90+error_giro) {
         orientacion=-90;
         break;
       }
     }
     else if(orientacion==-90){ 
-      SPEED_MT = map(z_rotation, -90, (-180+error_giro), 130,70);
+      SPEED_MT = map(z_rotation, -90, (-180+error_giro), 140,80);
       if (z_rotation <= -180+error_giro) {
         orientacion=180;
         break;
@@ -253,30 +300,42 @@ void left(){
     } 
     else if(orientacion==180){ 
       if(z_rotation<50){
-        SPEED_MT==130;
+        SPEED_MT=140;
       }
       else{
-        SPEED_MT = map(z_rotation, 180, (90+error_giro), 130,70);
-      }
-      if (z_rotation <= 90+error_giro) {
+        SPEED_MT = map(z_rotation, 180, (90+error_giro), 140,80);
+        if (z_rotation <= 90+error_giro) {
         orientacion=90;
         break;
       }
+      }
     }  
     else if(orientacion==90){ 
-      SPEED_MT = map(z_rotation, 90, (0+error_giro), 130,70);
+      SPEED_MT = map(z_rotation, 90, (0+error_giro), 140,80);
       if (z_rotation <= 0+error_giro) {
         orientacion=0;
         break;
       }
     }  
     SPEED_MT2 = SPEED_MT;
+    PID();
     set_speed();
     Serial.println(z_rotation);
   }
   stop(0);
   c = 0;
   c2=0;
+}
+bool lineaAbajo(){
+  int state_infra1=digitalRead(infrared1);
+  int state_infra2=digitalRead(infrared2);
+  if( state_infra1==1|| state_infra2 == 1){
+    stop(500);
+    int pulsos=c;
+    back(pulsos);
+    return true;
+    }
+    return false;
 }
 void PID(){
 //MOTORES DERECHA
@@ -310,8 +369,8 @@ void setahead(){//avance adelnate, la variable x indica cuantas unidades desea q
 void setback(){//retroceso
   digitalWrite(IN1_MT,1);
   digitalWrite(IN2_MT,0);
-  digitalWrite(IN3_MT,0);
-  digitalWrite(IN4_MT,1);
+  digitalWrite(IN3_MT,1);
+  digitalWrite(IN4_MT,0);
   digitalWrite(IN5_MT,1);
   digitalWrite(IN6_MT,0);
   digitalWrite(IN7_MT,1);
