@@ -12,6 +12,7 @@ Simple_MPU6050 mpu(Six_Axis_Quaternions);
 #define spamtimer(t) for (static uint32_t SpamTimer; (uint32_t)(millis() - SpamTimer) >= (t); SpamTimer = millis()) 
 #define printfloatx(Name,Variable,Spaces,Precision,EndTxt) print(Name); {char S[(Spaces + Precision + 3)];Serial.print(F(" ")); Serial.print(dtostrf((float)Variable,Spaces,Precision ,S));}Serial.print(EndTxt);
 float z_rotation;//angulo de rotacion
+float angulo;
 float ypr[3] = { 0, 0, 0 };
 float xyz[3] = { 0, 0, 0 };
 //todos los pines nombrados con numero par son lado derecho e impares izquierdp
@@ -34,15 +35,15 @@ int SPEED_MT2=170;
 //servo
 Servo servo;
 //encoders-variables de control
-const int encoder=2; // der
-const int encoder2=3;//izq
+const int encoder=19; // der
+const int encoder2=18;//izq
 int c;//contador de pulsos der
 int c2;//contador de pulsos izq
 int cplus;//contador de pulsos der
 int cplus2;//contador de pulsos izq
 int frenado;//avance del motor en el frenado
 int frenado2;
-int error_giro=5;
+int error_giro=8;
 // Variables para PID
 double setpoint; // Valor deseado de velocidad
 double input;    // Valor actual de velocidad
@@ -57,8 +58,8 @@ double Kd = 0.01; // Ganancia derivativa
 // Inicializa el PID
 PID myPID(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 //ultrasonico
-const int trig = 8;
-const int echo = 9;
+const int trig = 12;
+const int echo = 13;
 long duration;
 long distance;
 
@@ -100,8 +101,8 @@ void setup() {
   //encoder
   pinMode(encoder,INPUT);
   pinMode(encoder2,INPUT);
-  attachInterrupt(1,interruption,RISING);//interrupcion para contar pulsos del encoder
-  attachInterrupt(0,interruption2,RISING);
+  attachInterrupt(4,interruption,RISING);//interrupcion para contar pulsos del encoder
+  attachInterrupt(5,interruption2,RISING);
   //ultrasonico
   pinMode(trig, OUTPUT);  
   pinMode(echo, INPUT); 
@@ -120,38 +121,12 @@ void setup() {
   pinMode(infrared2,INPUT);
 }
 void loop() {
-  //right();
-  zonaC();
-  stop(20000);
-  // ahead();
-  // delay(200);
-  // c=0;
-  // c2=0;
-  // right();
-  // delay(200);
-  // c=0;
-  // c2=0;
-  // while(true){
-  //   setahead();
-  //   set_speed();
-  //   Serial.println(digitalRead(infrared1));
-  //   int state_infra1=digitalRead(infrared1);
-  //   int state_infra2=digitalRead(infrared2);
-  //   if( state_infra1==1|| state_infra2 == 1){
-  //     stop(0);
-  //     break;
-  //   }
-  //   delay(10);
-  // }
-  // delay(3000);
-  
-  // ahead();
-  // stop(2000);
-  // ahead();
-  // stop(8000);
-  // ahead();
-  // stop(2000);
-  //PID();
+
+  // float angulo=getAngulo();
+  // Serial.println(angulo);
+  right();
+  stop(1500);
+
 }
 // void ajustar_velocidad(){
 //   time1=millis();
@@ -172,7 +147,7 @@ void interruption() {
 void interruption2() {
   cplus2++;
   c2++;
-  Serial.println(c);
+  Serial.println(c2);
 }
 int corregir_giro(){
   int kerror=14;
@@ -244,28 +219,61 @@ bool lineaAbajo(){
 //   c = 0;
 //   c2=0;
 // }
+void correccion(){
+  for(int i=1; i>0; i++){ 
+    Serial.println("corrijiendo");
+    loop_mpu();
+    getAngulo();
+    if(orientacion!=0){ 
+      if(angulo>orientacion){
+        SPEED_MT=120;
+        SPEED_MT2=120;   
+        set_speed(); 
+        setleft();
+      }
+      else if(angulo<orientacion){
+      SPEED_MT=120;
+      SPEED_MT2=120;   
+      set_speed(); 
+      setright();
+      }
+    if(angulo<orientacion+1 && angulo>orientacion-1){
+      Serial.println("................");
+      break;
+    }
+  }
+    else{
+      if(z_rotation>orientacion){
+          SPEED_MT=120;
+          SPEED_MT2=120;   
+          set_speed(); 
+          setleft();
+        }
+      else if(z_rotation<orientacion){
+      SPEED_MT=120;
+      SPEED_MT2=120;   
+      set_speed(); 
+      setright();
+      }
+      if(z_rotation<orientacion+1 && z_rotation>orientacion-1 && i>10){
+        Serial.println(z_rotation);
+        Serial.println("................");
+        break;
+      }
+    }
+  }
+}
 void ahead(){
-
   while (true) {
     setahead();
     // Mapeo de velocidad basado en el contador de pulsos
     //int corregir=corregir_giro();
+    // SPEED_MT=140;
+    // SPEED_MT2=140;
     SPEED_MT = map(c, 0, 35, 140/*+corregir*/,100);
     SPEED_MT2 = map(c2, 0, 35, 140/*-corregir*/,100);
-    set_speed(); 
-    //PID();
-    if (c >= 38 ) {// Para detener el bucle cuando se alcanzan los 38 pulsos
-      digitalWrite(IN1_MT,0);
-      digitalWrite(IN2_MT,0);
-      digitalWrite(IN3_MT,0);
-      digitalWrite(IN4_MT,0);
-    }
-    if(c2>=38){
-      digitalWrite(IN5_MT,0);
-      digitalWrite(IN6_MT,0);
-      digitalWrite(IN7_MT,0);
-      digitalWrite(IN8_MT,0);
-    }
+    // set_speed(); 
+    //  PID();
     if(c >= 38 || c2>=38){     
       break;
     }
@@ -304,33 +312,105 @@ void back(int pul){
   c = 0;
   c2=0;
 }
+// void right(){
+//     SPEED_MT2=150;
+//     SPEED_MT = SPEED_MT2;
+//     set_speed();
+//     if(orientacion==0){
+//       for(int i=1;i>0;i++){ 
+//         getAngulo();  
+//         Serial.println(angulo);
+//         // SPEED_MT = map(z_rotation, 0, (90-error_giro), 130,70);
+//         setright();
+//         if( angulo < 90 -error_giro && i>10){ 
+//           break;
+//         }
+//       }
+//     stop(100);
+//     orientacion=90;
+//     correccion();
+//   }
+//   else if(orientacion==90){
+//     for(int i = 1; i>0; i++){
+//       getAngulo();
+//       Serial.println(angulo);
+//       // SPEED_MT = map(z_rotation, 90, (180-error_giro), 130,70);
+//       setright();
+    
+//       if( angulo<=180-error_giro && i>10){ 
+//         break;
+//       }
+//     }
+//     stop(100);
+//     orientacion=180;
+//     correccion();    
+//   }
+//   else if(orientacion==180){
+//     for(int i =1; i>0; i++){
+//       getAngulo();
+//       Serial.println(angulo);
+//       // SPEED_MT = map(z_rotation, -180, (-90-error_giro), 130,70);
+//       setright();
+    
+//       if(angulo<270-error_giro && i>10){ 
+//         break;
+//       }
+//     }
+//     stop(100);
+//     orientacion=270;  
+//     correccion();  
+//   }
+//   else if(orientacion==270){
+//     for(int i= 1; i>0; i++){
+//       getAngulo();
+//       Serial.println(angulo);
+//       // SPEED_MT = map(z_rotation, -90,(0-error_giro) , 130,70);
+//       // SPEED_MT2 = SPEED_MT;
+//       // set_speed();
+//       setright();
+//       if(angulo<360-error_giro && i>10){ 
+//           break;
+//       }
+//     }
+//     c=0;
+//     c2=0;
+//     stop(100);
+//     orientacion=0;
+//     correccion();
+//     c=0;
+//     c2=0;    
+//   }  
+// }
+// --------------------------------------------------------
 void right(){
     SPEED_MT2=140;
     SPEED_MT2 = SPEED_MT;
     set_speed();
     if(orientacion==0){
-    while(z_rotation<90-error_giro){
-      loop_mpu();  
+    while(angulo<90-error_giro){
+      getAngulo();  
       Serial.println(z_rotation);
       // SPEED_MT = map(z_rotation, 0, (90-error_giro), 130,70);
       setright();
     }
     stop(100);
     orientacion=90;
+    correccion();
   }
   else if(orientacion==90){
-    while(z_rotation<=175-error_giro){
-      loop_mpu();
-      Serial.println(z_rotation);
+    while(angulo<180-error_giro){
+      getAngulo();
+      Serial.println(angulo);
       // SPEED_MT = map(z_rotation, 90, (180-error_giro), 130,70);
       setright();
     }
     stop(100);
-    orientacion=180;    
+    orientacion=180; 
+    correccion();   
   }
   else if(orientacion==180){
-    while(z_rotation>50 || z_rotation<-90-error_giro){
-      loop_mpu();
+    while(angulo<270-error_giro){
+      getAngulo();
       Serial.println(z_rotation);
       // SPEED_MT = map(z_rotation, -180, (-90-error_giro), 130,70);
       setright();
@@ -339,8 +419,8 @@ void right(){
     orientacion=-90;    
   }
   else if(orientacion==-90){
-    while(z_rotation<0-error_giro){
-      loop_mpu();
+    while(angulo<360-error_giro){
+      getAngulo();
       Serial.println(z_rotation);
       // SPEED_MT = map(z_rotation, -90,(0-error_giro) , 130,70);
       // SPEED_MT2 = SPEED_MT;
@@ -353,9 +433,8 @@ void right(){
     orientacion=0;
     c=0;
     c2=0;    
-  }  
-  
-  
+  }
+}  
   // setright();
   // while (true) {
   //   loop_mpu();
@@ -400,54 +479,54 @@ void right(){
   // stop(0);
   // c = 0;
   // c2=0;
-}
-void left(){
-  setleft();
-  while (true) {
-    loop_mpu();
-    // Mapeo de velocidad basado giroscopio
-    if(orientacion==0){ 
-      SPEED_MT = map(z_rotation, 0, (-90+error_giro), 140,80);
-      if (z_rotation <= -90+error_giro) {
-        orientacion=-90;
-        break;
-      }
-    }
-    else if(orientacion==-90){ 
-      SPEED_MT = map(z_rotation, -90, (-180+error_giro), 140,80);
-      if (z_rotation <= -180+error_giro) {
-        orientacion=180;
-        break;
-      }
-    } 
-    else if(orientacion==180){ 
-      if(z_rotation<50){
-        SPEED_MT=140;
-      }
-      else{
-        SPEED_MT = map(z_rotation, 180, (90+error_giro), 140,80);
-        if (z_rotation <= 90+error_giro) {
-        orientacion=90;
-        break;
-      }
-      }
-    }  
-    else if(orientacion==90){ 
-      SPEED_MT = map(z_rotation, 90, (0+error_giro), 140,80);
-      if (z_rotation <= 0+error_giro) {
-        orientacion=0;
-        break;
-      }
-    }  
-    SPEED_MT2 = SPEED_MT;
-    PID();
-    set_speed();
-    Serial.println(z_rotation);
-  }
-  stop(0);
-  c = 0;
-  c2=0;
-}
+  //}
+// void left(){
+//   setleft();
+//   while (true) {
+//     loop_mpu();
+//     // Mapeo de velocidad basado giroscopio
+//     if(orientacion==0){ 
+//       SPEED_MT = map(z_rotation, 0, (-90+error_giro), 140,80);
+//       if (z_rotation <= -90+error_giro) {
+//         orientacion=-90;
+//         break;
+//       }
+//     }
+//     else if(orientacion==-90){ 
+//       SPEED_MT = map(z_rotation, -90, (-180+error_giro), 140,80);
+//       if (z_rotation <= -180+error_giro) {
+//         orientacion=180;
+//         break;
+//       }
+//     } 
+//     else if(orientacion==180){ 
+//       if(z_rotation<50){
+//         SPEED_MT=140;
+//       }
+//       else{
+//         SPEED_MT = map(z_rotation, 180, (90+error_giro), 140,80);
+//         if (z_rotation <= 90+error_giro) {
+//         orientacion=90;
+//         break;
+//       }
+//       }
+//     }  
+//     else if(orientacion==90){ 
+//       SPEED_MT = map(z_rotation, 90, (0+error_giro), 140,80);
+//       if (z_rotation <= 0+error_giro) {
+//         orientacion=0;
+//         break;
+//       }
+//     }  
+//     SPEED_MT2 = SPEED_MT;
+//     PID();
+//     set_speed();
+//     Serial.println(z_rotation);
+//   }
+//   stop(0);
+//   c = 0;
+//   c2=0;
+// }
 void PID(){
 //MOTORES DERECHA
   input = (cplus * 15); // Convertir pulsos a RPM 
@@ -455,7 +534,7 @@ void PID(){
   setpoint=SPEED_MT;
   myPID.Compute();
   analogWrite(ENA_MT1, output); // Establece la velocidad del motor
-  analogWrite(ENA_MT2, output);
+  analogWrite(ENA_MT3, output);
 //MOTORES IZQUIERDA
   input = (cplus2 * 15); // Convertir pulsos a RPM 
   cplus2 = 0; // Reinicia el contador para la siguiente medición
@@ -616,7 +695,7 @@ void set_speed(){
 //   analogWrite(ENA_MT3,SPEED_MT);
 //   analogWrite(ENA_MT4,SPEED_MT2);
 // }
-int distancia(){
+void distancia(){
   digitalWrite(trig, LOW);
   delayMicroseconds(2);
   digitalWrite(trig, HIGH);
@@ -625,9 +704,9 @@ int distancia(){
   duration = pulseIn(echo, HIGH);
   // Calculamos la distancia (en cm)
   distance = (duration * 0.034) / 2; 
-  // Serial.print(distance);
+  Serial.println(distance);
   delay(100);
-  return distance;
+  //return distance;
 }
 int getcolor(){//devuelve el color
 // 1:morado
@@ -705,6 +784,16 @@ void loop_mpu(){
   digitalWrite(9, !digitalRead(9));
   mpu.dmp_read_fifo(0);
   z_rotation=xyz[0];
+}
+void getAngulo(){
+  loop_mpu();
+  angulo = 0; 
+  if(z_rotation <0 ){
+    angulo = 180 +  (180+z_rotation);
+  }
+  else{
+    angulo = z_rotation;
+  }
 }
 
 void PrintValues(int32_t *quat, uint16_t SpamDelay = 100) {
@@ -912,20 +1001,17 @@ void zonaC() {
 bool paredAdelante(){
     lineaAbajo();
 }
-void right()
+void left(){
+  for(int i = 0; i < 3; i++){
+    right();
+  }
+}
 void pelotaEncontrada(){
     right();
     right();
     back(48);
 }
-//Zona A !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//int matriz[]  = ;
-void pelotaEncontrada(){
-    left();
-    left();
-    back();
-}
-void ZonaA(){
+void zonaA(){
   bool foundPelota = false; 
   bool foundSalida = false;
   bool lineaEncontrada = true; 
@@ -936,14 +1022,14 @@ void ZonaA(){
         if(paredAdelante() == true){
             right();
             if(lineaAbajo() == false && lineaEncontrada == false){
-                ahead();
-                left();
+              ahead();
+              left();
             }else{
-                lineaEncontrada = true;
-                left();
+              lineaEncontrada = true;
+              left();
             }
             if(lineaAbajo() == false && lineaEncontrada == false){
-                ahead(1);
+                ahead();
                 left();
             }else{
                 lineaEncontrada = true;
