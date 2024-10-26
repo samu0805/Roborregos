@@ -1,0 +1,153 @@
+//sensor de color
+const int s0=34;
+const int s1=35;
+const int s2=36;
+const int s3=37;
+const int outTCS=38;
+//leds
+const int purpleLed = 8;
+const int pinkLed = 2;
+const int yellowLed = 3;
+const int blackLed = 4;
+int purple, pink, yellow, black;
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+//sensor de color
+  pinMode(purpleLed,OUTPUT);
+  pinMode(pinkLed,OUTPUT);
+  pinMode(yellowLed,OUTPUT);
+  pinMode(blackLed,OUTPUT);
+  pinMode(s0,OUTPUT);
+  pinMode(s1,OUTPUT);
+  pinMode(s2,OUTPUT);
+  pinMode(s3,OUTPUT);
+  pinMode(outTCS,INPUT);
+  digitalWrite(s0,1);
+  digitalWrite(s1,1); 
+  // calibrar_col();
+
+}
+
+void loop() {
+  calibrar_col();
+  // put your main code here, to run repeatedly:
+    // analogWrite(purpleLed,125);
+    // delay(3000);
+    // analogWrite(purpleLed,0);
+    // delay(1000);
+    // setColors();
+    while(true){ 
+  int x = getcolor();
+  Serial.println(x);
+  delay(100);
+    }
+}
+
+
+
+
+int getcolor(){//devuelve el color
+// 1:morado
+// 2:rosa
+// 3:amarillo
+// 4:negro
+  digitalWrite(s2,0);
+  digitalWrite(s3,0);
+  int red=pulseIn(outTCS,0);
+  delay(20);
+  
+  digitalWrite(s2,1);
+  digitalWrite(s3,1);
+  int green=pulseIn(outTCS,0);
+  delay(20);
+
+  digitalWrite(s2,0);
+  digitalWrite(s3,1);
+  int blue=pulseIn(outTCS,0);
+  delay(20);
+  int color=green+red+blue;
+  Serial.println(color);
+if(color<purple-(purple-yellow)/2 ){
+  // Serial.println("Color AMARILLO");
+  return 3;
+}
+else if(color>pink+(black-purple)/2){
+  // Serial.println("Color NEGRO");
+    return 4;
+}
+else{
+  if(color>purple+(pink-purple)/2){ 
+  return 2;
+  }
+  else if(color<pink-(pink-purple)/2){
+  // Serial.println("Color ROSA");
+  return 1;
+  }
+}
+// else if(green<100 && blue<100 && red<100 && (green-red)<20 && (green-blue)<20){
+//   Serial.println("Color Blanco");
+// }
+
+// else{
+//     Serial.println("Color no encontrado");
+// }
+}
+void calibrar_col(){
+  for(int i=1;i<=4;i++){ 
+    if(i==1){ 
+      Serial.println("morado");
+      analogWrite(purpleLed,125);
+      delay(3000);
+      purple=setColors();
+      digitalWrite(purpleLed,0);
+      Serial.println(purple);
+    }
+    else if(i==2){ 
+      analogWrite(pinkLed,125);
+      delay(3000);
+      pink=setColors();
+      digitalWrite(pinkLed,0);
+      Serial.println(pink);
+    }
+    else if(i==3){ 
+      analogWrite(yellowLed,125);
+      delay(3000);
+      yellow=setColors();
+      digitalWrite(yellowLed,0);
+      Serial.println(yellow);
+    }
+    else if(i==4){ 
+      Serial.println("negro");
+      analogWrite(blackLed,125);
+      delay(3000);
+      black=setColors();
+      digitalWrite(blackLed,0);
+      Serial.println(black);
+    }
+  }
+}
+int setColors(){//devuelve valores RGB
+  digitalWrite(s2,0);
+  digitalWrite(s3,0);
+  int red=pulseIn(outTCS,1);
+  delay(200);
+  
+  digitalWrite(s2,1);
+  digitalWrite(s3,1);
+  int green=pulseIn(outTCS,1);
+  delay(200);
+
+  digitalWrite(s2,0);
+  digitalWrite(s3,1);
+  int blue=pulseIn(outTCS,1);
+  delay(200);
+  
+  Serial.print("Red:");
+  Serial.print(red);
+  Serial.print(" Green:");
+  Serial.print(green);
+  Serial.print(" Blue:");
+  Serial.println(blue);
+  return (red+green+blue);
+}
