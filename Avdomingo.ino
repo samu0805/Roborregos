@@ -139,6 +139,9 @@ void loop() {
   ahead();
   ahead();
   right();
+  ahead();
+  ahead();
+  right();
 }
 //funcion contabilizadora de pulsos del encoder
 void interruption() {
@@ -159,14 +162,14 @@ void corregir_giro(){
     getAngulo();
     if(orientacion!=0){ 
       if(angulo>orientacion){
-        SPEED_MT=120;
-        SPEED_MT2=120;   
+        SPEED_MT=190;
+        SPEED_MT2=190;   
         set_speed(); 
         setleft();
       }
       else if(angulo<orientacion){
-        SPEED_MT=120;
-        SPEED_MT2=120;   
+        SPEED_MT=190;
+        SPEED_MT2=190;   
         set_speed(); 
         setright();
       }
@@ -177,14 +180,14 @@ void corregir_giro(){
     }
     else{
       if(z_rotation>orientacion){
-          SPEED_MT=120;
-          SPEED_MT2=120;   
+          SPEED_MT=190;
+          SPEED_MT2=190;   
           set_speed(); 
           setleft();
         }
       else if(z_rotation<orientacion){
-        SPEED_MT=120;
-        SPEED_MT2=120;   
+        SPEED_MT=190;
+        SPEED_MT2=190;   
         set_speed(); 
         setright();
       }
@@ -283,12 +286,12 @@ void back(){
 }
 // --------------------------------------------------------
 void right(){
-    // SPEED_MT2=140;
-    // SPEED_MT2 = SPEED_MT;
-    // set_speed();
-    setpoint=100;
-    setpoint2=100;
-    PID();
+    SPEED_MT2=190;
+    SPEED_MT2 = SPEED_MT;
+    set_speed();
+    // setpoint=100;
+    // setpoint2=100;
+    // PID();
     if(orientacion==0){
     while(angulo<90-error_giro){
       getAngulo();  
