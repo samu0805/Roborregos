@@ -136,6 +136,7 @@ void setup() {
 }
 void loop() {
   // colorDet();
+  delay(1000);
   ahead();
   ahead();
   right();
@@ -220,8 +221,8 @@ void ahead(){
     setahead();
     // Mapeo de velocidad basado en el contador de pulsos
     int corregir=corregir_avanza();
-    SPEED_MT = map(c, 0, 35, 170+corregir,90);
-    SPEED_MT2 = map(c2, 0, 35, 170-corregir,90);
+    SPEED_MT = map(c, 0, 35, 190+corregir,90);
+    SPEED_MT2 = map(c2, 0, 35, 190-corregir,90);
     set_speed(); 
     // PID();
     if (c >= 90 ) {// Para detener el bucle cuando se alcanzan los 38 pulsos
@@ -289,9 +290,6 @@ void right(){
     SPEED_MT2=190;
     SPEED_MT2 = SPEED_MT;
     set_speed();
-    // setpoint=100;
-    // setpoint2=100;
-    // PID();
     if(orientacion==0){
     while(angulo<90-error_giro){
       getAngulo();  
@@ -336,12 +334,14 @@ void right(){
     }
     c=0;
     c2=0;
-    stop(400);
     orientacion=0;
     corregir_giro();
     c=0;
     c2=0;    
   }
+  stop(400);
+  c=0;
+  c2=0; 
 }   
 void left(){
     SPEED_MT2=140;
@@ -394,6 +394,7 @@ void left(){
     stop(400);
     orientacion=0;
     corregir_giro();
+    stop(400);
     c=0;
     c2=0;    
   }
