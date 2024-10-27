@@ -136,13 +136,8 @@ void setup() {
 }
 void loop() {
   // colorDet();
-  delay(1000);
-  ahead();
-  ahead();
-  right();
-  ahead();
-  ahead();
-  right();
+  zonaA();
+  delay(10000);
 }
 //funcion contabilizadora de pulsos del encoder
 void interruption() {
@@ -247,8 +242,8 @@ void ahead(){
     }
   }
   stop(400);
-  SPEED_MT=140;
-  SPEED_MT2=140;
+  SPEED_MT=190;
+  SPEED_MT2=190;
   set_speed(); 
   c = 0;
   c2=0;
@@ -258,29 +253,29 @@ void back(){
   while (true) {
     // Mapeo de velocidad basado en el contador de pulsos
     int corregir=corregir_avanza();
-    SPEED_MT = map(c, 0, 35, 170-corregir,90);
-    SPEED_MT2 = map(c2, 0, 35, 170+corregir,90);
+    SPEED_MT = map(c, 0, 35, 190-corregir,90);
+    SPEED_MT2 = map(c2, 0, 35, 190+corregir,90);
     set_speed(); 
     // PID();
-    if (c >= 38 ) {// Para detener el bucle cuando se alcanzan los 38 pulsos
+    if (c >= 90 ) {// Para detener el bucle cuando se alcanzan los 38 pulsos
       digitalWrite(IN1_MT,0);
       digitalWrite(IN2_MT,0);
       digitalWrite(IN3_MT,0);
       digitalWrite(IN4_MT,0);
     }
-    if(c2>=38){
+    if(c2>=90){
       digitalWrite(IN5_MT,0);
       digitalWrite(IN6_MT,0);
       digitalWrite(IN7_MT,0);
       digitalWrite(IN8_MT,0);
     }
-    if(c >= 38 || c2>=38){
+    if(c >= 90 || c2>=90){
       break;
     }
   }
   stop(400);
-  SPEED_MT=140;
-  SPEED_MT2=140;
+  SPEED_MT=190;
+  SPEED_MT2=190;
   set_speed(); 
   c = 0;
   c2=0;
@@ -344,7 +339,7 @@ void right(){
   c2=0; 
 }   
 void left(){
-    SPEED_MT2=140;
+    SPEED_MT2=190;
     SPEED_MT2 = SPEED_MT;
     set_speed();
   if(orientacion==0){
@@ -394,10 +389,12 @@ void left(){
     stop(400);
     orientacion=0;
     corregir_giro();
-    stop(400);
     c=0;
     c2=0;    
   }
+  stop(400);
+  c=0;
+  c2=0; 
 }
 void PID(){
   input1 = cplus; 
@@ -885,32 +882,33 @@ void zonaC() {
 
 //Zona A !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void pelotaEncontrada(){
-  right();
-  right();
-  back();
+    right();
+    right();
+    back();
 }
 void zonaA(){
-  bool foundPelota = false; 
-  bool foundSalida = false;
-  bool lineaEncontrada = true; 
-  int countD= 0;
-  int countL=0;
-  //busquda pelota
-    while (foundPelota == false && lineaEncontrada == false){
+    bool foundPelota = false; 
+    bool foundSalida = false;
+    int countD= 0;
+    int countL=0;
+    //entrada Laberinto 
+    ahead();
+    //busquda pelota
+    while (foundPelota == false && lineaNegra == false){
         if(paredAdelante() == true){
             right();
-            if(lineaAbajo() == false && lineaEncontrada == false){
-              ahead();
-              left();
-            }else{
-              lineaEncontrada = true;
-              left();
-            }
-            if(lineaAbajo() == false && lineaEncontrada == false){
-                ahead();
+            ahead();
+            if(lineaNegra == false){
                 left();
             }else{
-                lineaEncontrada = true;
+                lineaNegra = true;
+                left();
+            }
+            ahead();
+            if(lineaNegra == false){
+                left();
+            }else{
+                lineaNegra = true;
                 left();
                 ahead();
                 right();
@@ -936,8 +934,8 @@ void zonaA(){
     //fuga 
     int pos = countD-countL;
     ahead();
-    if(lineaEncontrada){
-        if(abs(pos)== 2){
+    if(lineaNegra == true){
+        if(abs(pos) == 2){
             ahead();
         }
         else if(pos == -3){
@@ -973,20 +971,20 @@ void zonaA(){
         //pos == 1 -> true
         // or pos == 0
         int it = 0;
-        while (lineaEncontrada == false && foundSalida == false && it<2){
+        while (lineaNegra == false && foundSalida == false && it<2){
             left();
-            if(lineaAbajo() == false && lineaEncontrada == false){
-                ahead();
+            ahead();
+            if(lineaNegra == false){
                 left();
             }else{
-                lineaEncontrada = true;
+                lineaNegra = true;
                 right();
             }
-            if(lineaAbajo() == false && lineaEncontrada == false){
-                ahead();
+            ahead();
+            if(lineaNegra == false){
                 left();
             }else{
-                lineaEncontrada = true;
+                lineaNegra = true;
                 left();
                 ahead();
                 left();
@@ -1002,7 +1000,7 @@ void zonaA(){
             right();
         }
         if (foundSalida == false){
-          //tanto 0 como 1 pueden hacer esto
+            //tanto 0 como 1 pueden hacer esto
             right();
             ahead();
             right();
