@@ -785,7 +785,7 @@ void colorDet(){
     delay(1000);
     digitalWrite(yellowLed,0);
   }
-  // colors[col-1]++;
+  colors[col-1]++;
 }
 //arriba, izquierda, abajo, derecha
 void search(bool visited[3][5], int x, int y, int directions[4][2], int backstep[3][5], int& cnt, bool& pathFound){
@@ -835,6 +835,7 @@ void fuga(int cnt, int x, int y, int Mcolor, int directions[4][2], int backstep[
       if (col== Mcolor){
         Mcolor = 30;
         foundColor = true;
+        colorDet();
       }
     }
     for (int j = 0; j < 4; j++){
@@ -869,7 +870,7 @@ void zonaC() {
   int cnt = 0;
   bool pathFound = false;
   int Mcolor = 0;
-  int start_x = 0, start_y = 0;
+  int start_x = 1, start_y = 0;
   search(visited, start_x, start_y, directions, backstep, cnt, pathFound);
   for(int i = 0; i<2; i++){
     if(colors[i]< colors[i+1]){
@@ -878,7 +879,6 @@ void zonaC() {
   }
   fuga(cnt, start_x, start_y, Mcolor, directions, backstep);
 }
-
 
 //Zona A !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void pelotaEncontrada(){
@@ -976,28 +976,27 @@ void zonaA(){
             ahead();
             if(lineaNegra == false){
                 left();
+                ahead();
+                if(lineaNegra == false){
+                    right();
+                }else{
+                    lineaNegra = true;
+                    left();
+                    ahead();
+                    left();
+                }
+                if(paredAdelante() == true && lineaNegra == false){
+                    it++;   
+                }else{
+                    ahead();
+                    foundSalida= true;
+                }
+                right();
             }else{
                 lineaNegra = true;
                 right();
             }
-            ahead();
-            if(lineaNegra == false){
-                left();
-            }else{
-                lineaNegra = true;
-                left();
-                ahead();
-                left();
-            }
-            if(paredAdelante() == true){
-                it++;   
-            }else{
-                ahead();
-                if(getcolor() == 5){ // "rojo
-                    foundSalida = true;
-                }
-            }
-            right();
+           
         }
         if (foundSalida == false){
             //tanto 0 como 1 pueden hacer esto
