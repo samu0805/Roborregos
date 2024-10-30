@@ -138,15 +138,15 @@ void setup() {
   pinMode(infrared2,INPUT);
 }
 void loop() {
-  ahead();
-  ahead();
+  back(120);
+  back(120);
   SPEED_MT2=100;
   SPEED_MT2 = SPEED_MT;
   set_speed();
   SPEED_MT2=100;
   SPEED_MT2 = SPEED_MT;
   set_speed();
-  right();
+  left();
 
 }
 //funcion contabilizadora de pulsos del encoder
@@ -285,37 +285,39 @@ void wait(unsigned long interval) {
     // Aquí no hacemos nada, solo actualizamos el tiempo
   }
 }
-void back(){
-  setback();
-  for(int i=1; i>0; i++) {
-    // Mapeo de velocidad basado en el contador de pulsos
-    int corregir=corregir_avanza();
-    SPEED_MT = map(c, 0, 35, 170-corregir,90);
-    SPEED_MT2 = map(c2, 0, 35, 170+corregir,90);
-    set_speed(); 
-    // PID();
-    if (c >= 38 ) {// Para detener el bucle cuando se alcanzan los 38 pulsos
-      digitalWrite(IN1_MT,0);
-      digitalWrite(IN2_MT,0);
-      digitalWrite(IN3_MT,0);
-      digitalWrite(IN4_MT,0);
-    }
-    if(c2>=38){
-      digitalWrite(IN5_MT,0);
-      digitalWrite(IN6_MT,0);
-      digitalWrite(IN7_MT,0);
-      digitalWrite(IN8_MT,0);
-    }
-    if(c >= 38 || c2>=38){
-      break;
-    }
-  }
-  stop(400);
-  SPEED_MT=140;
-  SPEED_MT2=140;
-  set_speed(); 
+void back(int pul){
   c = 0;
   c2=0;
+  for(int i=1; i>0; i++) {   
+    distancia();
+    if(i>0){ 
+      if(c >= pul || c2>=pul){
+        distancia();
+        if(c >= pul || c2>=pul){
+          break;
+        }
+      }
+    }
+    setback();
+    // Mapeo de velocidad basado en el contador de pulsos
+    int corregir=corregir_avanza();
+    // SPEED_MT = map(c, 0, 35, 190+corregir,90);
+    // SPEED_MT2 = map(c2, 0, 35, 190-corregir,90);
+    SPEED_MT =190-corregir;
+    SPEED_MT2 = 190+corregir;
+    SPEED_MT = constrain(SPEED_MT, 120, 255);
+    SPEED_MT2 = constrain(SPEED_MT2, 120, 255);
+    set_speed(); 
+    // PID();
+    if(i>2){ 
+       if(c >= pul || c2>=pul || distance<20){
+        distancia();
+        if(c >= pul || c2>=pul || distance<20){
+          break;
+        }
+      }
+    }
+  }
 }
 // --------------------------------------------------------
 void right(){
@@ -397,60 +399,82 @@ void right(){
   c2=0; 
 }   
 void left(){
-    SPEED_MT2=140;
-    SPEED_MT2 = SPEED_MT;
-    set_speed();
+  SPEED_MT2=60;
+  SPEED_MT2 = SPEED_MT;
+  set_speed();
   if(orientacion==0){
-    while(z_rotation > -90+error_giro){
+    for(int i=1; i>0; i++){
       getAngulo();  
-      Serial.println(z_rotation);
+      Serial.println(angulo);
       // SPEED_MT = map(z_rotation, 0, (90-error_giro), 130,70);
+      SPEED_MT2=60;
+      SPEED_MT2 = SPEED_MT;
+      set_speed();
       setleft();
+      if(z_rotation<-90+error_giro){
+        break;
+      }
     }
-    stop(100);
+    wait(100);
     orientacion=270;
     corregir_giro();
   }
   else if(orientacion==270){
-    while(angulo>180+error_giro){
+    for(int i=1; i>0; i++){
       getAngulo();
       Serial.println(angulo);
       // SPEED_MT = map(z_rotation, 90, (180-error_giro), 130,70);
+      SPEED_MT2=60;
+      SPEED_MT2 = SPEED_MT;
+      set_speed();
       setleft();
+      if(angulo<180+error_giro){
+        break;
+      }
     }
-    stop(100);
+    wait(100);
     orientacion=180; 
     corregir_giro();   
   }
   else if(orientacion==180){
-    while(angulo>90+error_giro){
+    for(int i=1; i>0; i++){
       getAngulo();
-      Serial.println(angulo);
+      Serial.println(z_rotation);
       // SPEED_MT = map(z_rotation, -180, (-90-error_giro), 130,70);
+      SPEED_MT2=60;
+      SPEED_MT2 = SPEED_MT;
+      set_speed();
       setleft();
+      if(angulo<90+error_giro){
+        break;
+      }
     }
-    stop(100);
-    orientacion=90;  
-    corregir_giro();  
+    wait(100);
+    orientacion=90;   
+    corregir_giro(); 
   }
   else if(orientacion==90){
-    while(angulo>0+error_giro){
+    for(int i=1; i>0; i++){
       getAngulo();
-      Serial.println(angulo);
+      Serial.println(z_rotation);
       // SPEED_MT = map(z_rotation, -90,(0-error_giro) , 130,70);
+      SPEED_MT2=60;
+      SPEED_MT2 = SPEED_MT;
+      set_speed();
       // SPEED_MT2 = SPEED_MT;
       // set_speed();
       setleft();
+      if(angulo<0+error_giro){
+        break;
+      }
     }
-    c=0;
-    c2=0;
-    stop(400);
+    wait(100);
     orientacion=0;
-    corregir_giro();
-    stop(400);
-    c=0;
-    c2=0;    
+    corregir_giro();   
   }
+  wait(400);
+  c=0;
+  c2=0; 
 }
 void PID(){
   input1 = cplus; 
@@ -866,7 +890,7 @@ void search(bool visited[3][5], int x, int y, int directions[4][2], int backstep
         c2=0;
         if(lineaNegra == false){
           search(visited, newX, newY, directions, backstep, cnt, pathFound);
-          back();
+          back(120);
         }
         else{
           visited[newX][newY] = true;
@@ -940,7 +964,7 @@ void zonaC() {
 void pelotaEncontrada(){
   right();
   right();
-  back();
+  back(120);
 }
 void zonaA(){
   bool foundPelota = false; 
