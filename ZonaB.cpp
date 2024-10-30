@@ -21,7 +21,7 @@ void path(){
         setleft();
         while (!found){ //sacar un rango de pasos para llegar al final
             setleft();
-            infra1 = getLinea(infra1);
+            infra1=digitalRead(infrared1);
             color = getColor(color);
             if(infra1 == 0 && color == 4){
                 break;
@@ -31,13 +31,13 @@ void path(){
     else if(infra1 == 0 && color == 4 && infra2 == 1){
         while(infra2 == 1){
             setleft();
-            infra2 = getLinea(infra2);
+            infra2=digitalRead(infrared2);
         }
     }// Línea en la izquierda PID
     else if(infra1 == 1 && color == 4 && infra2 == 0){
         while(infra1 == 1){
             setright();
-            infra1 = getLinea(infra1);
+            infra1=digitalRead(infrared1);
         }
     } // Línea Punteada, Blanco los tres
     else if(infra1 == 0 && color != 4 && infra2 == 0){
@@ -55,8 +55,9 @@ void path(){
     else if (infra1 == 1 && color == 4 && infra2 == 1){
         // tipos de patrones
         // tipo 1: linea perpendicular con línea consecuente en el frente.
-        // tipo 2: circulo o cuadrado con el centro despejado sin línea, recorrer el contorno
         setahead();
+        // tipo 2: circulo o cuadrado con el centro despejado sin línea, recorrer el contorno
+        
     }// Error, 001 and 100 
     else if (infra1 == 0 && color != 4 && infra2 == 1){
         setright();
