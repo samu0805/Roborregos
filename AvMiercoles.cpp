@@ -145,8 +145,7 @@ void setup() {
   pinMode(limitS2,INPUT);
 }
 void loop() {
-  zonaA();  
-  wait(2000000);
+  zonaC();  
 }
 //funcion contabilizadora de pulsos del encoder
 void interruption() {
@@ -896,13 +895,13 @@ void colorDet(){
 }
 //arriba, izquierda, abajo, derecha
 void search(bool visited[3][5], int x, int y, int directions[4][2], int backstep[3][5], int& cnt, bool& pathFound){
-  // colorDet();
-  // visited[x][y] = true;
-  // if(pathFound == false){
-  //     cnt++;
-  //     backstep[x][y] = cnt;
-  // }
-  if(x == 3 && y == 5){
+  colorDet();
+  visited[x][y] = true;
+  if(pathFound == false){
+      cnt++;
+      backstep[x][y] = cnt;
+  }
+  if(x == 2 && y == 4){
     pathFound = true; 
   }
   for (int i = 0; i<4; i++){
@@ -910,7 +909,8 @@ void search(bool visited[3][5], int x, int y, int directions[4][2], int backstep
     int newY = y + directions[0][1];
     // Serial.println(newY);
     // delay(100);
-    if((newX >= 0 && newY >= 0 && newX<3 && newY <5) && (paredAdelante() == false)){
+    //
+    if((newX >= 0 && newY >= 0 && newX<3 && newY <5)&& (paredAdelante() == false) ){
       if(visited[newX][newY] == false){
         ahead();
         c=0;
@@ -973,18 +973,18 @@ void zonaC() {
   ahead();
   //adelante, derecha, atras, izquierda
   int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
-  bool visited[3][5] = {{false}}; 
-  int backstep[3][5] = {{30}};
+  bool visited[2][2] = {{false}}; 
+  int backstep[2][2] = {{30}};
   int cnt = 0;
   bool pathFound = false;
   int Mcolor = 0;
-  int start_x = 1, start_y = 0;
+  int start_x = 0, start_y = 0;
   search(visited, start_x, start_y, directions, backstep, cnt, pathFound);
-  // for(int i = 0; i<2; i++){
-  //   if(colors[i]< colors[i+1]){
-  //     Mcolor = i+1;
-  //   }
-  // }
+  for(int i = 0; i<2; i++){
+    if(colors[i]< colors[i+1]){
+      Mcolor = i+1;
+    }
+  }
   fuga(cnt, start_x, start_y, Mcolor, directions, backstep);
 }
 
