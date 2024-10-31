@@ -48,9 +48,9 @@ int frenado2;
 int error_giro=8;
 ///////////////////////////////////////
 // Parámetros del PID
-double Kp = 30; // Ganancia proporcional
-double Ki = 15; // Ganancia integral
-double Kd = 0.1; // Ganancia derivativa
+double Kp = 1; // Ganancia proporcional
+double Ki = 0; // Ganancia integral
+double Kd = 0; // Ganancia derivativa
 double setpoint = 4; // Velocidad deseada
 double setpoint2 = 4; // Velocidad deseada
 double input1;
@@ -112,7 +112,7 @@ void setup() {
   analogWrite(ENA_MT3,SPEED_MT);
   analogWrite(ENA_MT4,SPEED_MT2);
   //servo
-  servo.attach(13);
+  servo.attach(11);
   servo.write(90);
   //encoder
   pinMode(encoder,INPUT);
@@ -145,8 +145,13 @@ void setup() {
   pinMode(limitS2,INPUT);
 }
 void loop() {
-  zonaA();
-  stop(10000);
+  calibrar_col();
+  int x=getcolor();
+  Serial.println(x);
+  // ahead();
+  // back(100);
+  // right();
+  // left();
 }
 //funcion contabilizadora de pulsos del encoder
 void interruption(){
@@ -184,24 +189,21 @@ bool choque(){
   return false;
 }
 void corregir_giro(){
+  SPEED_MT=60;
+  SPEED_MT2=60; 
+  set_speed();
+  setpoint=60;
+  setpoint2=60;
   for(int i=1; i>0; i++){ 
     Serial.println("corrijiendo");
-    SPEED_MT=60;
-    SPEED_MT2=60; 
-    set_speed();
+    PID(60);
     loop_mpu();
     getAngulo();
     if(orientacion!=0){ 
       if(angulo>orientacion){
-        // SPEED_MT=100;
-        // SPEED_MT2=190;   
-        // set_speed(); 
         setleft();
       }
-      else if(angulo<orientacion){
-        // SPEED_MT=190;
-        // SPEED_MT2=190;   
-        // set_speed(); 
+      else if(angulo<orientacion){ 
         setright();
       }
       if(angulo<orientacion+1 && angulo>orientacion-1){
@@ -211,15 +213,9 @@ void corregir_giro(){
     }
     else{
       if(z_rotation>orientacion){
-          // SPEED_MT=190;
-          // SPEED_MT2=190;   
-          // set_speed(); 
           setleft();
         }
       else if(z_rotation<orientacion){
-        // SPEED_MT=190;
-        // SPEED_MT2=190;   
-        // set_speed(); 
         setright();
       }
       if(z_rotation<orientacion+1 && z_rotation>orientacion-1 && i>10){
@@ -263,8 +259,8 @@ void ahead(){
     // SPEED_MT2 = map(c2, 0, 35, 190-corregir,90);
     SPEED_MT =190+corregir;
     SPEED_MT2 = 190-corregir;
-    SPEED_MT = constrain(SPEED_MT, 120, 230);
-    SPEED_MT2 = constrain(SPEED_MT2, 120, 230);
+    SPEED_MT = constrain(SPEED_MT, 120, 255);
+    SPEED_MT2 = constrain(SPEED_MT2, 120, 255);
     set_speed(); 
     // PID();
     if(i>2){ 
@@ -347,15 +343,16 @@ void back(int pul){
 }
 // --------------------------------------------------------
 void right(){
-  SPEED_MT2=100;
+  setright();
+  SPEED_MT2=120;
   SPEED_MT = SPEED_MT2;
-  set_speed();
+  setpoint=180;
+  setpoint2=180;
   if(orientacion==0){
     for(int i=1; i>0; i++){
+      PID(100);
       getAngulo();  
       Serial.println(angulo);
-      // SPEED_MT = map(z_rotation, 0, (90-error_giro), 130,70);
-      setright();
       if(z_rotation>90-error_giro){
         break;
       }
@@ -366,10 +363,9 @@ void right(){
   }
   else if(orientacion==90){
     for(int i=1; i>0; i++){
+      PID(100);
       getAngulo();
       Serial.println(angulo);
-      // SPEED_MT = map(z_rotation, 90, (180-error_giro), 130,70);
-      setright();
       if(angulo>180-error_giro){
         break;
       }
@@ -380,10 +376,9 @@ void right(){
   }
   else if(orientacion==180){
     for(int i=1; i>0; i++){
+      PID(100);
       getAngulo();
       Serial.println(z_rotation);
-      // SPEED_MT = map(z_rotation, -180, (-90-error_giro), 130,70);
-      setright();
       if(angulo>270-error_giro){
         break;
       }
@@ -394,12 +389,9 @@ void right(){
   }
   else if(orientacion==270){
     for(int i=1; i>0; i++){
+      PID(100);
       getAngulo();
       Serial.println(z_rotation);
-      // SPEED_MT = map(z_rotation, -90,(0-error_giro) , 130,70);
-      // SPEED_MT2 = SPEED_MT;
-      // set_speed();
-      setright();
       if(angulo>360-error_giro){
         break;
       }
@@ -413,15 +405,16 @@ void right(){
   c2=0; 
 }   
 void left(){
-  SPEED_MT2=100;
+  setleft();
+  SPEED_MT2=120;
   SPEED_MT = SPEED_MT2;
-  set_speed();
+  setpoint=100;
+  setpoint2=100;
   if(orientacion==0){
     for(int i=1; i>0; i++){
       getAngulo();  
       Serial.println(angulo);
-      // SPEED_MT = map(z_rotation, 0, (90-error_giro), 130,70);
-      setleft();
+      PID(100);
       if(z_rotation<-90+error_giro){
         break;
       }
@@ -434,8 +427,7 @@ void left(){
     for(int i=1; i>0; i++){
       getAngulo();
       Serial.println(angulo);
-      // SPEED_MT = map(z_rotation, 90, (180-error_giro), 130,70);
-      setleft();
+      PID(100);
       if(angulo<180+error_giro){
         break;
       }
@@ -448,8 +440,7 @@ void left(){
     for(int i=1; i>0; i++){
       getAngulo();
       Serial.println(z_rotation);
-      // SPEED_MT = map(z_rotation, -180, (-90-error_giro), 130,70);
-      setleft();
+      PID(100);
       if(angulo<90+error_giro){
         break;
       }
@@ -462,10 +453,7 @@ void left(){
     for(int i=1; i>0; i++){
       getAngulo();
       Serial.println(z_rotation);
-      // SPEED_MT = map(z_rotation, -90,(0-error_giro) , 130,70);
-      // SPEED_MT2 = SPEED_MT;
-      // set_speed();
-      setleft();
+      PID(100);
       if(angulo<0+error_giro){
         break;
       }
@@ -478,36 +466,15 @@ void left(){
   c=0;
   c2=0; 
 }
-void PID(){
-  input1 = cplus; 
-  input2 = cplus2;
-
-  //  Motor 1-3
-  double error1 = (setpoint/20) - input1;
-  integral1 += error1;
-  double derivative1 = error1 - lastError1;
-  output1 = Kp * error1 + Ki * integral1 + Kd * derivative1;
-  lastError1 = error1;
-
-  // Motor 2-4
-  double error2 = (setpoint2/20) - input2;
-  integral2 += error2;
-  double derivative2 = error2 - lastError2;
-  output2 = Kp * error2 + Ki * integral2 + Kd * derivative2;
-  lastError2 = error2;
-
-  // Limitar salida
-  output1 = constrain(output1, 0, 255);
-  output2 = constrain(output2, 0, 255);
-
-  analogWrite(ENA_MT1,output1);
-  analogWrite(ENA_MT2,output2);
-  analogWrite(ENA_MT3,output1);
-  analogWrite(ENA_MT4,output2);
-  // Reiniciar contadores
-  cplus = 0;
-  cplus2 = 0;
-  delay(50); 
+void PID(int speed){
+  int errorVel=2*(10-cplus);
+  SPEED_MT=speed+errorVel;
+  SPEED_MT2=speed+errorVel;
+  SPEED_MT = constrain(SPEED_MT, 0, 255);
+  SPEED_MT2 = constrain(SPEED_MT2, 0, 255);
+  set_speed();
+  cplus=0;
+  cplus2=0;
 }
 void setahead(){//avance adelnate, la variable x indica cuantas unidades desea que avance
   digitalWrite(IN1_MT,0);
