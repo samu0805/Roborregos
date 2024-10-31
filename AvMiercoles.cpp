@@ -973,12 +973,12 @@ void zonaC() {
   ahead();
   //adelante, derecha, atras, izquierda
   int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
-  bool visited[2][2] = {{false}}; 
-  int backstep[2][2] = {{30}};
+  bool visited[3][5] = {{false}}; 
+  int backstep[3][5] = {{30}};
   int cnt = 0;
   bool pathFound = false;
   int Mcolor = 0;
-  int start_x = 0, start_y = 0;
+  int start_x = 1, start_y = 0;
   search(visited, start_x, start_y, directions, backstep, cnt, pathFound);
   for(int i = 0; i<2; i++){
     if(colors[i]< colors[i+1]){
