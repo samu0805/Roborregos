@@ -17,7 +17,7 @@ float xyz[3] = { 0, 0, 0 };
 float anguloAnterior=0;
 float tiempoAnterior=0;
 int16_t *gyro;
-//todos los pines nombrados con numero par son lado derecho e impares izquierdp
+//todos los pines nombrados con numero par son lado izquierdo  e impares derecho
 //Motores
 const int ENA_MT1 = 10;//atras derecha
 const int ENA_MT2 = 5;//atras izq
@@ -76,14 +76,17 @@ const int s3=37;
 const int outTCS=38;
 int colors[3] = {0};
 //leds
-const int purpleLed = 80;
-const int pinkLed = 200;
-const int yellowLed = 300;
-const int blackLed = 400;
+const int purpleLed = 13;
+const int pinkLed = 11;
+const int yellowLed = 12;
+const int blackLed = 9;
 int purple, pink, yellow, black;
 // infrarrojo
 const int infrared1=24;//der
 const int infrared2=25;//izq
+//limit switch
+int limitS1=40;
+int limitS2=41;
 bool lineaNegra=false;
 int dt=500;
 int orientacion=0;
@@ -109,7 +112,8 @@ void setup() {
   analogWrite(ENA_MT3,SPEED_MT);
   analogWrite(ENA_MT4,SPEED_MT2);
   //servo
-  servo.attach(11);
+  servo.attach(4);
+  servo.write(90);
   //encoder
   pinMode(encoder,INPUT);
   pinMode(encoder2,INPUT);
@@ -136,18 +140,13 @@ void setup() {
   //INFRARROHOS
   pinMode(infrared1,INPUT);
   pinMode(infrared2,INPUT);
+  //limitstich
+  pinMode(limitS1,INPUT);
+  pinMode(limitS2,INPUT);
 }
 void loop() {
-  back(120);
-  back(120);
-  SPEED_MT2=100;
-  SPEED_MT2 = SPEED_MT;
-  set_speed();
-  SPEED_MT2=100;
-  SPEED_MT2 = SPEED_MT;
-  set_speed();
-  left();
-
+  zonaA();  
+  wait(2000000);
 }
 //funcion contabilizadora de pulsos del encoder
 void interruption() {
@@ -161,6 +160,29 @@ void interruption2() {
   // Serial.println(c2);
 }
 //MOVIMIENTO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+bool choque(){
+  int limitState1=digitalRead(limitS1);           
+  int limitState2=digitalRead(limitS2);           
+  if(limitState1==1){
+    setBackleft();
+    wait(500);
+    ahead();
+    return true;
+  }
+  else if(limitState2==1){
+    setBackRight();
+    wait(500);
+    ahead();
+    return true;
+  }
+  if(limitState1==1 || limitState2==1){
+    setBackleft();
+    wait(500);
+    ahead();
+    return true;
+  }
+  return false;
+}
 void corregir_giro(){
   for(int i=1; i>0; i++){ 
     Serial.println("corrijiendo");
@@ -230,7 +252,7 @@ void ahead(){
       if(c >= pul || c2>=pul || distance<20){
         distancia();
         if(c >= pul || c2>=pul || distance<20){
-        break;
+          break;
         }
       }
     }
@@ -253,6 +275,10 @@ void ahead(){
         }
       }
     }
+    // bool impacto=choque();
+    // if(impacto==true){
+    //   break
+    // }
     // bool linea = lineaAbajo();
     // if(linea == true){
     //   lineaNegra = true;
@@ -310,9 +336,9 @@ void back(int pul){
     set_speed(); 
     // PID();
     if(i>2){ 
-       if(c >= pul || c2>=pul || distance<20){
+       if(c >= pul || c2>=pul ){
         distancia();
-        if(c >= pul || c2>=pul || distance<20){
+        if(c >= pul || c2>=pul ){
           break;
         }
       }
@@ -321,17 +347,14 @@ void back(int pul){
 }
 // --------------------------------------------------------
 void right(){
-  SPEED_MT2=60;
-  SPEED_MT2 = SPEED_MT;
+  SPEED_MT2=100;
+  SPEED_MT = SPEED_MT2;
   set_speed();
   if(orientacion==0){
     for(int i=1; i>0; i++){
       getAngulo();  
       Serial.println(angulo);
       // SPEED_MT = map(z_rotation, 0, (90-error_giro), 130,70);
-      SPEED_MT2=60;
-      SPEED_MT2 = SPEED_MT;
-      set_speed();
       setright();
       if(z_rotation>90-error_giro){
         break;
@@ -346,9 +369,6 @@ void right(){
       getAngulo();
       Serial.println(angulo);
       // SPEED_MT = map(z_rotation, 90, (180-error_giro), 130,70);
-      SPEED_MT2=60;
-      SPEED_MT2 = SPEED_MT;
-      set_speed();
       setright();
       if(angulo>180-error_giro){
         break;
@@ -363,9 +383,6 @@ void right(){
       getAngulo();
       Serial.println(z_rotation);
       // SPEED_MT = map(z_rotation, -180, (-90-error_giro), 130,70);
-      SPEED_MT2=60;
-      SPEED_MT2 = SPEED_MT;
-      set_speed();
       setright();
       if(angulo>270-error_giro){
         break;
@@ -380,9 +397,6 @@ void right(){
       getAngulo();
       Serial.println(z_rotation);
       // SPEED_MT = map(z_rotation, -90,(0-error_giro) , 130,70);
-      SPEED_MT2=60;
-      SPEED_MT2 = SPEED_MT;
-      set_speed();
       // SPEED_MT2 = SPEED_MT;
       // set_speed();
       setright();
@@ -399,17 +413,14 @@ void right(){
   c2=0; 
 }   
 void left(){
-  SPEED_MT2=60;
-  SPEED_MT2 = SPEED_MT;
+  SPEED_MT2=100;
+  SPEED_MT = SPEED_MT2;
   set_speed();
   if(orientacion==0){
     for(int i=1; i>0; i++){
       getAngulo();  
       Serial.println(angulo);
       // SPEED_MT = map(z_rotation, 0, (90-error_giro), 130,70);
-      SPEED_MT2=60;
-      SPEED_MT2 = SPEED_MT;
-      set_speed();
       setleft();
       if(z_rotation<-90+error_giro){
         break;
@@ -424,9 +435,6 @@ void left(){
       getAngulo();
       Serial.println(angulo);
       // SPEED_MT = map(z_rotation, 90, (180-error_giro), 130,70);
-      SPEED_MT2=60;
-      SPEED_MT2 = SPEED_MT;
-      set_speed();
       setleft();
       if(angulo<180+error_giro){
         break;
@@ -441,9 +449,6 @@ void left(){
       getAngulo();
       Serial.println(z_rotation);
       // SPEED_MT = map(z_rotation, -180, (-90-error_giro), 130,70);
-      SPEED_MT2=60;
-      SPEED_MT2 = SPEED_MT;
-      set_speed();
       setleft();
       if(angulo<90+error_giro){
         break;
@@ -458,9 +463,6 @@ void left(){
       getAngulo();
       Serial.println(z_rotation);
       // SPEED_MT = map(z_rotation, -90,(0-error_giro) , 130,70);
-      SPEED_MT2=60;
-      SPEED_MT2 = SPEED_MT;
-      set_speed();
       // SPEED_MT2 = SPEED_MT;
       // set_speed();
       setleft();
@@ -563,6 +565,26 @@ void set_speed(){
   analogWrite(ENA_MT2,SPEED_MT2);
   analogWrite(ENA_MT3,SPEED_MT);
   analogWrite(ENA_MT4,SPEED_MT2);
+}
+void setBackRight(){
+  digitalWrite(IN1_MT,0);
+  digitalWrite(IN2_MT,0);
+  digitalWrite(IN3_MT,1);
+  digitalWrite(IN4_MT,0);
+  digitalWrite(IN5_MT,1);
+  digitalWrite(IN6_MT,0);
+  digitalWrite(IN7_MT,0);
+  digitalWrite(IN8_MT,0);
+}
+void setBackleft(){
+  digitalWrite(IN1_MT,1);
+  digitalWrite(IN2_MT,0);
+  digitalWrite(IN3_MT,0);
+  digitalWrite(IN4_MT,0);
+  digitalWrite(IN5_MT,0);
+  digitalWrite(IN6_MT,0);
+  digitalWrite(IN7_MT,1);
+  digitalWrite(IN8_MT,0);
 }
 //////////////7funciones de MPU6050/////////////////////
 void loop_mpu(){
@@ -722,12 +744,16 @@ void distancia(){
   delay(100);
   //return distance;
 }
-bool paredAdelante(){
+int paredAdelante(){
   distancia();
-  if(distance < 10){
-    return true;
+  if(distance < 15){
+    return 1;
   }
-  return false; 
+  distancia();
+  if(distance < 15){
+    return 1;
+  }
+  return 0; 
 }
 int getcolor(){//devuelve el color
 // 1:morado
@@ -846,6 +872,7 @@ void girar(int directions[4][2]){
   directions[3][1] = tempy;
   right();
   c=0;
+  
   c2=0;
 }
 void colorDet(){
@@ -865,17 +892,17 @@ void colorDet(){
     delay(1000);
     digitalWrite(yellowLed,0);
   }
-  // colors[col-1]++;
+  colors[col-1]++;
 }
 //arriba, izquierda, abajo, derecha
 void search(bool visited[3][5], int x, int y, int directions[4][2], int backstep[3][5], int& cnt, bool& pathFound){
-  colorDet();
-  visited[x][y] = true;
-  if(pathFound == false){
-      cnt++;
-      backstep[x][y] = cnt;
-  }
-  if(x == 2 && y == 4){
+  // colorDet();
+  // visited[x][y] = true;
+  // if(pathFound == false){
+  //     cnt++;
+  //     backstep[x][y] = cnt;
+  // }
+  if(x == 3 && y == 5){
     pathFound = true; 
   }
   for (int i = 0; i<4; i++){
@@ -915,6 +942,7 @@ void fuga(int cnt, int x, int y, int Mcolor, int directions[4][2], int backstep[
       if (col== Mcolor){
         Mcolor = 30;
         foundColor = true;
+        colorDet();
       }
     }
     for (int j = 0; j < 4; j++){
@@ -942,6 +970,7 @@ void fuga(int cnt, int x, int y, int Mcolor, int directions[4][2], int backstep[
   }
 }
 void zonaC() {
+  ahead();
   //adelante, derecha, atras, izquierda
   int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
   bool visited[3][5] = {{false}}; 
@@ -949,45 +978,49 @@ void zonaC() {
   int cnt = 0;
   bool pathFound = false;
   int Mcolor = 0;
-  int start_x = 0, start_y = 0;
+  int start_x = 1, start_y = 0;
   search(visited, start_x, start_y, directions, backstep, cnt, pathFound);
-  for(int i = 0; i<2; i++){
-    if(colors[i]< colors[i+1]){
-      Mcolor = i+1;
-    }
-  }
+  // for(int i = 0; i<2; i++){
+  //   if(colors[i]< colors[i+1]){
+  //     Mcolor = i+1;
+  //   }
+  // }
   fuga(cnt, start_x, start_y, Mcolor, directions, backstep);
 }
 
 
 //Zona A !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void pelotaEncontrada(){
-  right();
-  right();
-  back(120);
+    right();
+    right();
+    c=0;
+    c2=0;
+    back(200);
+    servo.write(0);
 }
 void zonaA(){
-  bool foundPelota = false; 
-  bool foundSalida = false;
-  bool lineaEncontrada = true; 
-  int countD= 0;
-  int countL=0;
-  //busquda pelota
-    while (foundPelota == false && lineaEncontrada == false){
+    bool foundPelota = false; 
+    bool foundSalida = false;
+    int countD= 0;
+    int countL=0;
+    //entrada Laberinto 
+    ahead();
+    //busquda pelota
+    while (foundPelota == false && lineaNegra == false){
         if(paredAdelante() == true){
             right();
-            if(lineaAbajo() == false && lineaEncontrada == false){
-              ahead();
-              left();
-            }else{
-              lineaEncontrada = true;
-              left();
-            }
-            if(lineaAbajo() == false && lineaEncontrada == false){
-                ahead();
+            ahead();
+            if(lineaNegra == false){
                 left();
             }else{
-                lineaEncontrada = true;
+                lineaNegra = true;
+                left();
+            }
+            ahead();
+            if(lineaNegra == false){
+                left();
+            }else{
+                lineaNegra = true;
                 left();
                 ahead();
                 right();
@@ -1011,10 +1044,11 @@ void zonaA(){
         } 
     }
     //fuga 
+    lineaNegra = true;
     int pos = countD-countL;
     ahead();
-    if(lineaEncontrada){
-        if(abs(pos)== 2){
+    if(lineaNegra == true){
+        if(abs(pos) == 2){
             ahead();
         }
         else if(pos == -3){
@@ -1050,36 +1084,35 @@ void zonaA(){
         //pos == 1 -> true
         // or pos == 0
         int it = 0;
-        while (lineaEncontrada == false && foundSalida == false && it<2){
+        while (lineaNegra == false && foundSalida == false && it<2){
             left();
-            if(lineaAbajo() == false && lineaEncontrada == false){
-                ahead();
+            ahead();
+            if(lineaNegra == false){
                 left();
+                ahead();
+                if(lineaNegra == false){
+                    right();
+                }else{
+                    lineaNegra = true;
+                    left();
+                    ahead();
+                    left();
+                }
+                if(paredAdelante() == true && lineaNegra == false){
+                    it++;   
+                }else{
+                    ahead();
+                    foundSalida= true;
+                }
+                right();
             }else{
-                lineaEncontrada = true;
+                lineaNegra = true;
                 right();
             }
-            if(lineaAbajo() == false && lineaEncontrada == false){
-                ahead();
-                left();
-            }else{
-                lineaEncontrada = true;
-                left();
-                ahead();
-                left();
-            }
-            if(paredAdelante() == true){
-                it++;   
-            }else{
-                ahead();
-                if(getcolor() == 5){ // "rojo
-                    foundSalida = true;
-                }
-            }
-            right();
+           
         }
         if (foundSalida == false){
-          //tanto 0 como 1 pueden hacer esto
+            //tanto 0 como 1 pueden hacer esto
             right();
             ahead();
             right();
