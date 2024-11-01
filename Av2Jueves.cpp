@@ -12,6 +12,7 @@ Simple_MPU6050 mpu(Six_Axis_Quaternions);
 #define printfloatx(Name,Variable,Spaces,Precision,EndTxt) print(Name); {char S[(Spaces + Precision + 3)];Serial.print(F(" ")); Serial.print(dtostrf((float)Variable,Spaces,Precision ,S));}Serial.print(EndTxt);
 float z_rotation;//angulo de rotacion
 float angulo;
+float inclinacion;
 float ypr[3] = { 0, 0, 0 };
 float xyz[3] = { 0, 0, 0 };
 float anguloAnterior=0;
@@ -48,9 +49,9 @@ int frenado2;
 int error_giro=8;
 ///////////////////////////////////////
 // Parámetros del PID
-double Kp = 1; // Ganancia proporcional
-double Ki = 0; // Ganancia integral
-double Kd = 0; // Ganancia derivativa
+double Kp = 30; // Ganancia proporcional
+double Ki = 15; // Ganancia integral
+double Kd = 0.1; // Ganancia derivativa
 double setpoint = 4; // Velocidad deseada
 double setpoint2 = 4; // Velocidad deseada
 double input1;
@@ -76,17 +77,17 @@ const int s3=37;
 const int outTCS=38;
 int colors[3] = {0};
 //leds
-const int purpleLed = 130;
-const int pinkLed = 11;
-const int yellowLed = 12;
-const int blackLed = 9;
+const int purpleLed = 51;
+const int pinkLed = 53;
+const int yellowLed = 50;
+const int blackLed = 52;
 int purple, pink, yellow, black;
 // infrarrojo
 const int infrared1=24;//der
 const int infrared2=25;//izq
 //limit switch
-int limitS1=40;
-int limitS2=41;
+int limitS1=48;
+int limitS2=49;
 bool lineaNegra=false;
 int dt=500;
 int orientacion=0;
@@ -111,9 +112,6 @@ void setup() {
   analogWrite(ENA_MT2,SPEED_MT2);
   analogWrite(ENA_MT3,SPEED_MT);
   analogWrite(ENA_MT4,SPEED_MT2);
-  //servo
-  servo.attach(11);
-  servo.write(90);
   //encoder
   pinMode(encoder,INPUT);
   pinMode(encoder2,INPUT);
@@ -137,6 +135,9 @@ void setup() {
   // calibrar_col();
   //MPU6050
   inicializarMPU6050();
+  //servo
+  servo.attach(11);
+  servo.write(90);
   //INFRARROHOS
   pinMode(infrared1,INPUT);
   pinMode(infrared2,INPUT);
@@ -145,16 +146,14 @@ void setup() {
   pinMode(limitS2,INPUT);
 }
 void loop() {
-  calibrar_col();
-  int x=getcolor();
-  Serial.println(x);
+  // calibrar_col();
+  // rampa();
+  zonaA();
   // ahead();
-  // back(100);
-  // right();
-  // left();
+
 }
 //funcion contabilizadora de pulsos del encoder
-void interruption(){
+void interruption() {
   cplus++;
   c++;
   // Serial.println(c);
@@ -167,43 +166,48 @@ void interruption2() {
 //MOVIMIENTO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 bool choque(){
   int limitState1=digitalRead(limitS1);           
-  int limitState2=digitalRead(limitS2);           
+  int limitState2=digitalRead(limitS2); 
+  if(limitState1==1 && limitState2==1){
+    setback();
+    wait(250);
+    stop(0);
+    ahead();
+    return true;
+  }          
   if(limitState1==1){
     setBackleft();
-    wait(500);
+    wait(250);
+    stop(0);
     ahead();
     return true;
   }
   else if(limitState2==1){
     setBackRight();
-    wait(500);
-    ahead();
-    return true;
-  }
-  if(limitState1==1 || limitState2==1){
-    setBackleft();
-    wait(500);
+    wait(250);
     ahead();
     return true;
   }
   return false;
 }
 void corregir_giro(){
-  SPEED_MT=60;
-  SPEED_MT2=60; 
-  set_speed();
-  setpoint=60;
-  setpoint2=60;
   for(int i=1; i>0; i++){ 
     Serial.println("corrijiendo");
-    PID(60);
+    SPEED_MT=60;
+    SPEED_MT2=60; 
+    set_speed();
     loop_mpu();
     getAngulo();
     if(orientacion!=0){ 
       if(angulo>orientacion){
+        // SPEED_MT=100;
+        // SPEED_MT2=190;   
+        // set_speed(); 
         setleft();
       }
-      else if(angulo<orientacion){ 
+      else if(angulo<orientacion){
+        // SPEED_MT=190;
+        // SPEED_MT2=190;   
+        // set_speed(); 
         setright();
       }
       if(angulo<orientacion+1 && angulo>orientacion-1){
@@ -213,9 +217,15 @@ void corregir_giro(){
     }
     else{
       if(z_rotation>orientacion){
+          // SPEED_MT=190;
+          // SPEED_MT2=190;   
+          // set_speed(); 
           setleft();
         }
       else if(z_rotation<orientacion){
+        // SPEED_MT=190;
+        // SPEED_MT2=190;   
+        // set_speed(); 
         setright();
       }
       if(z_rotation<orientacion+1 && z_rotation>orientacion-1 && i>10){
@@ -225,6 +235,8 @@ void corregir_giro(){
       }
     }
   }
+  stop(0);
+  wait(700);
 }
 int corregir_avanza(){
   int kerror=20;
@@ -242,7 +254,7 @@ void ahead(){
   c = 0;
   c2=0;
   for(int i=1; i>0; i++) {
-    int pul=80;
+    int pul=100;
     distancia();
     if(i>0){ 
       if(c >= pul || c2>=pul || distance<20){
@@ -271,10 +283,10 @@ void ahead(){
         }
       }
     }
-    // bool impacto=choque();
-    // if(impacto==true){
-    //   break
-    // }
+    bool impacto=choque();
+    if(impacto==true){
+      break;
+    }
     // bool linea = lineaAbajo();
     // if(linea == true){
     //   lineaNegra = true;
@@ -341,18 +353,54 @@ void back(int pul){
     }
   }
 }
+
+void rampa(){
+  // ahead();
+  // while(true){ 
+  //   int corregir=corregir_avanza();
+    SPEED_MT = 150;
+    SPEED_MT2 = 150;
+    set_speed();
+  //   setahead();
+  //   Serial.println("avance");
+  //     // SPEED_MT = 170;
+  //     // SPEED_MT2 = 170;
+  //     // set_speed();
+  //     setahead();
+      int time=millis();
+      float stateB;
+      while(true){
+        float stateA=stateB-inclinacion;
+        stateB= inclinacion;
+        loop_mpu();
+        if(stateA>0.5){
+          setahead();
+          Serial.println("back");
+        }
+        else if(stateA<-0.5){
+          setback();
+          Serial.println("ahead");
+        }
+        else if(inclinacion==0){
+          stop(0);
+        }
+        delay(50);
+      }
+      Serial.println("stop");
+      stop(20000);
+  // }
+}
 // --------------------------------------------------------
 void right(){
-  setright();
-  SPEED_MT2=120;
+  SPEED_MT2=100;
   SPEED_MT = SPEED_MT2;
-  setpoint=180;
-  setpoint2=180;
+  set_speed();
   if(orientacion==0){
     for(int i=1; i>0; i++){
-      PID(100);
       getAngulo();  
       Serial.println(angulo);
+      // SPEED_MT = map(z_rotation, 0, (90-error_giro), 130,70);
+      setright();
       if(z_rotation>90-error_giro){
         break;
       }
@@ -363,9 +411,10 @@ void right(){
   }
   else if(orientacion==90){
     for(int i=1; i>0; i++){
-      PID(100);
       getAngulo();
       Serial.println(angulo);
+      // SPEED_MT = map(z_rotation, 90, (180-error_giro), 130,70);
+      setright();
       if(angulo>180-error_giro){
         break;
       }
@@ -376,9 +425,10 @@ void right(){
   }
   else if(orientacion==180){
     for(int i=1; i>0; i++){
-      PID(100);
       getAngulo();
       Serial.println(z_rotation);
+      // SPEED_MT = map(z_rotation, -180, (-90-error_giro), 130,70);
+      setright();
       if(angulo>270-error_giro){
         break;
       }
@@ -389,9 +439,12 @@ void right(){
   }
   else if(orientacion==270){
     for(int i=1; i>0; i++){
-      PID(100);
       getAngulo();
       Serial.println(z_rotation);
+      // SPEED_MT = map(z_rotation, -90,(0-error_giro) , 130,70);
+      // SPEED_MT2 = SPEED_MT;
+      // set_speed();
+      setright();
       if(angulo>360-error_giro){
         break;
       }
@@ -405,16 +458,15 @@ void right(){
   c2=0; 
 }   
 void left(){
-  setleft();
-  SPEED_MT2=120;
+  SPEED_MT2=100;
   SPEED_MT = SPEED_MT2;
-  setpoint=100;
-  setpoint2=100;
+  set_speed();
   if(orientacion==0){
     for(int i=1; i>0; i++){
       getAngulo();  
       Serial.println(angulo);
-      PID(100);
+      // SPEED_MT = map(z_rotation, 0, (90-error_giro), 130,70);
+      setleft();
       if(z_rotation<-90+error_giro){
         break;
       }
@@ -427,7 +479,8 @@ void left(){
     for(int i=1; i>0; i++){
       getAngulo();
       Serial.println(angulo);
-      PID(100);
+      // SPEED_MT = map(z_rotation, 90, (180-error_giro), 130,70);
+      setleft();
       if(angulo<180+error_giro){
         break;
       }
@@ -440,7 +493,8 @@ void left(){
     for(int i=1; i>0; i++){
       getAngulo();
       Serial.println(z_rotation);
-      PID(100);
+      // SPEED_MT = map(z_rotation, -180, (-90-error_giro), 130,70);
+      setleft();
       if(angulo<90+error_giro){
         break;
       }
@@ -453,7 +507,10 @@ void left(){
     for(int i=1; i>0; i++){
       getAngulo();
       Serial.println(z_rotation);
-      PID(100);
+      // SPEED_MT = map(z_rotation, -90,(0-error_giro) , 130,70);
+      // SPEED_MT2 = SPEED_MT;
+      // set_speed();
+      setleft();
       if(angulo<0+error_giro){
         break;
       }
@@ -466,15 +523,36 @@ void left(){
   c=0;
   c2=0; 
 }
-void PID(int speed){
-  int errorVel=2*(10-cplus);
-  SPEED_MT=speed+errorVel;
-  SPEED_MT2=speed+errorVel;
-  SPEED_MT = constrain(SPEED_MT, 0, 255);
-  SPEED_MT2 = constrain(SPEED_MT2, 0, 255);
-  set_speed();
-  cplus=0;
-  cplus2=0;
+void PID(){
+  input1 = cplus; 
+  input2 = cplus2;
+
+  //  Motor 1-3
+  double error1 = (setpoint/20) - input1;
+  integral1 += error1;
+  double derivative1 = error1 - lastError1;
+  output1 = Kp * error1 + Ki * integral1 + Kd * derivative1;
+  lastError1 = error1;
+
+  // Motor 2-4
+  double error2 = (setpoint2/20) - input2;
+  integral2 += error2;
+  double derivative2 = error2 - lastError2;
+  output2 = Kp * error2 + Ki * integral2 + Kd * derivative2;
+  lastError2 = error2;
+
+  // Limitar salida
+  output1 = constrain(output1, 0, 255);
+  output2 = constrain(output2, 0, 255);
+
+  analogWrite(ENA_MT1,output1);
+  analogWrite(ENA_MT2,output2);
+  analogWrite(ENA_MT3,output1);
+  analogWrite(ENA_MT4,output2);
+  // Reiniciar contadores
+  cplus = 0;
+  cplus2 = 0;
+  delay(50); 
 }
 void setahead(){//avance adelnate, la variable x indica cuantas unidades desea que avance
   digitalWrite(IN1_MT,0);
@@ -559,6 +637,7 @@ void loop_mpu(){
   digitalWrite(9, !digitalRead(9));
   mpu.dmp_read_fifo(0);
   z_rotation=xyz[0];
+  inclinacion = xyz[1];
 }
 void getAngulo(){
   loop_mpu();
@@ -687,17 +766,17 @@ void inicializarMPU6050(){
 
 
 // ALGORITMOS (LÓGICA) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-bool lineaAbajo(){
-  int state_infra1=digitalRead(infrared1);
-  int state_infra2=digitalRead(infrared2);
-  if( state_infra1==1|| state_infra2 == 1){
-    lineaNegra=true;
-    return true;
-  }
-  else{
-    return 0;
-  }
-}
+// bool lineaAbajo(){
+//   int state_infra1=digitalRead(infrared1);
+//   int state_infra2=digitalRead(infrared2);
+//   if( state_infra1==1|| state_infra2 == 1){
+//     lineaNegra=true;
+//     return true;
+//   }
+//   else{
+//     return 0;
+//   }
+// }
 void distancia(){
   digitalWrite(trig, LOW);
   delayMicroseconds(2);
@@ -837,9 +916,8 @@ void girar(int directions[4][2]){
   }
   directions[3][0] = tempx;
   directions[3][1] = tempy;
-  left();
+  right();
   c=0;
-  
   c2=0;
 }
 void colorDet(){
@@ -863,30 +941,28 @@ void colorDet(){
 }
 //arriba, izquierda, abajo, derecha
 void search(bool visited[3][5], int x, int y, int directions[4][2], int backstep[3][5], int& cnt, bool& pathFound){
-  //colorDet();
-  visited[x][y] = true;
-  if(pathFound == false){
-      cnt++;
-      backstep[x][y] = cnt;
-  }
-  if(x == 2 && y == 4){
-    pathFound = true;
+  // colorDet();
+  // visited[x][y] = true;
+  // if(pathFound == false){
+  //     cnt++;
+  //     backstep[x][y] = cnt;
+  // }
+  if(x == 3 && y == 5){
+    pathFound = true; 
   }
   for (int i = 0; i<4; i++){
     int newX = x + directions[0][0];
     int newY = y + directions[0][1];
     // Serial.println(newY);
     // delay(100);
-    bool pared = paredAdelante();
-    wait(2000);
-    if((newX >= 0 && newY >= 0 && newX<3 && newY <5) && pared == false){
+    if((newX >= 0 && newY >= 0 && newX<3 && newY <5) && (paredAdelante() == false)){
       if(visited[newX][newY] == false){
         ahead();
         c=0;
         c2=0;
         if(lineaNegra == false){
           search(visited, newX, newY, directions, backstep, cnt, pathFound);
-          back(70);
+          back(120);
         }
         else{
           visited[newX][newY] = true;
@@ -911,8 +987,7 @@ void fuga(int cnt, int x, int y, int Mcolor, int directions[4][2], int backstep[
       if (col== Mcolor){
         Mcolor = 30;
         foundColor = true;
-
-        //colorDet();
+        colorDet();
       }
     }
     for (int j = 0; j < 4; j++){
@@ -935,13 +1010,14 @@ void fuga(int cnt, int x, int y, int Mcolor, int directions[4][2], int backstep[
     int newX = x + directions[0][0];
     int newY = y + directions[0][1];
     if(newX == 2 && newY == 5){
-      //ahead();
+      ahead();
     }
   }
 }
 void zonaC() {
-  //adelante, izquierda, atras, derecha
-  int directions[4][2] = {{0, 1}, {-1, 0}, {0, -1}, {1, 0}};
+  ahead();
+  //adelante, derecha, atras, izquierda
+  int directions[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
   bool visited[3][5] = {{false}}; 
   int backstep[3][5] = {{30}};
   int cnt = 0;
@@ -964,7 +1040,7 @@ void pelotaEncontrada(){
     right();
     c=0;
     c2=0;
-    back(70);
+    back(110);
     servo.write(0);
 }
 void zonaA(){
@@ -1100,5 +1176,91 @@ void zonaA(){
                 ahead();
             }
         }
+    }
+}
+
+// ZONA B !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// 0 detectar negro, 1 detectar color
+//cambiar color en el caso de que sea diferente número para blanco y negro
+// 5 igual a blanco, 4 a negro
+void path(){
+    int infra1=digitalRead(infrared1);
+    int infra2=digitalRead(infrared2);
+    int color = getcolor();
+    Serial.print(infra2);
+    Serial.print(",");
+    Serial.print(color);
+    Serial.print(",");
+    Serial.println(infra1);
+     //básico
+    if (infra1 == 0 && color == 4 && infra2 == 0){
+        ahead();
+    }//avanza V
+    else if(infra1 == 1 && color != 4 && infra2 == 1){
+        bool found = false;
+        setleft();
+        while (!found){ //sacar un rango de pasos para llegar al final
+            setleft();
+            infra1=digitalRead(infrared1);
+            color = getcolor();
+            if(infra1 == 0 && color == 4){
+                break;
+            }
+        }
+    }// Línea en la derecha
+    else if(infra1 == 0 && color == 4 && infra2 == 1){
+        while(infra2 == 1){
+            setleft();
+            infra2=digitalRead(infrared2);
+        }
+    }// Línea en la izquierda PID
+    else if(infra1 == 1 && color == 4 && infra2 == 0){
+        while(infra1 == 1){
+            setright();
+            infra1=digitalRead(infrared1);
+        }
+    } // Línea Punteada, Blanco los tres
+    else if(infra1 == 0 && color != 4 && infra2 == 0){
+        int count = 0;
+        bool linea = false; 
+        while (count < 100 && linea == false){
+            setahead();
+            color = getcolor();
+            if(color == 4){
+                linea = true; 
+            }
+            count++; 
+        }
+    }// peor de los casos
+    else if (infra1 == 1 && color == 4 && infra2 == 1){
+        // tipos de patrones
+        // tipo 1: linea perpendicular con línea consecuente en el frente.
+        for(int i = 0; i < 100; i++){
+          setahead();
+        }
+        color = getcolor();
+        if(color != 4){
+
+        }
+        
+        // tipo 2: circulo o cuadrado con el centro despejado sin línea, recorrer el contorno
+        
+    }// Error, 001 and 100 
+    else if (infra1 == 0 && color != 4 && infra2 == 1){
+        setright();
+    }
+    else if (infra1 == 1 && color != 4 && infra2 == 0){
+        setleft();
+    }
+    // else{
+    //     cout << "error";
+    // }
+}
+void zonaB(){
+    SPEED_MT = 90;
+    SPEED_MT2 = SPEED_MT;
+    set_speed();
+    while(paredAdelante() == false){
+        path();
     }
 }
