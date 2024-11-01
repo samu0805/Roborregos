@@ -134,7 +134,7 @@ void setup() {
   digitalWrite(s1,0); 
   // calibrar_col();
   //MPU6050
-  inicializarMPU6050();
+  // inicializarMPU6050();
   //servo
   servo.attach(11);
   servo.write(90);
@@ -148,8 +148,46 @@ void setup() {
 void loop() {
   // calibrar_col();
   // rampa();
-  zonaA();
+  //zonaC();
   // ahead();
+  SPEED_MT=90;
+  SPEED_MT2=SPEED_MT;
+  set_speed();
+  int infra1=digitalRead(infrared1);
+  int infra2=digitalRead(infrared2);
+  Serial.print(infra2);
+  Serial.print(",");
+  Serial.println(infra1);
+  if(infra1==0 && infra2==0){
+    setahead();
+  }
+  else if(infra1==0 && infra2==1){
+    digitalWrite(IN1_MT,0);
+    digitalWrite(IN2_MT,1);//GIRAR SOBRE EL EJE
+    digitalWrite(IN3_MT,0);
+    digitalWrite(IN4_MT,0);
+    digitalWrite(IN5_MT,0);
+    digitalWrite(IN6_MT,1);
+    digitalWrite(IN7_MT,0);
+    digitalWrite(IN8_MT,0);
+  }
+  else if(infra1==1 && infra2==0){
+        digitalWrite(IN1_MT,0);
+    digitalWrite(IN2_MT,1);
+    digitalWrite(IN3_MT,0);
+    digitalWrite(IN4_MT,0);
+    digitalWrite(IN5_MT,0);
+    digitalWrite(IN6_MT,0);
+    digitalWrite(IN7_MT,0);
+    digitalWrite(IN8_MT,1);
+    
+  }
+  else if(infra1==1 && infra2==1){
+    stop(0);
+  }
+  delay(50);
+  // if()
+  // if()
 
 }
 //funcion contabilizadora de pulsos del encoder
@@ -1042,8 +1080,7 @@ void pelotaEncontrada(){
     c=0;
     c2=0;
     back(120);
-    stop(0);
-    wait(1000);
+    stop(1000);
     servo.write(0);
 }
 void zonaA(){
@@ -1148,6 +1185,9 @@ void zonaA(){
                 if(paredAdelante() == true && lineaNegra == false){
                     it++;   
                 }else{
+                  if(0==0){
+                    ahead();
+                  }
                     ahead();
                     foundSalida= true;
                 }
@@ -1249,10 +1289,10 @@ void path(){
         // tipo 2: circulo o cuadrado con el centro despejado sin línea, recorrer el contorno
         
     }// Error, 001 and 100 
-    else if (infra1 == 0 && color != 4 && infra2 == 1){
+    else if (infra1 == 0 && infra2 == 1){
         setright();
     }
-    else if (infra1 == 1 && color != 4 && infra2 == 0){
+    else if (infra1 == 1 && infra2 == 0){
         setleft();
     }
     // else{
