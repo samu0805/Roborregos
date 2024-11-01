@@ -147,52 +147,55 @@ void setup() {
 }
 void loop() {
   // calibrar_col();
+  // getcolor();
   // rampa();
   //zonaC();
   // ahead();
-  /*
-  SPEED_MT=80 ;
-  SPEED_MT2=SPEED_MT;
-  set_speed();
-  int infra1=digitalRead(infrared1);
-  int infra2=digitalRead(infrared2);
-  Serial.print(infra2);
-  Serial.print(",");
-  Serial.println(infra1);
-  if(infra1==0 && infra2==0){
-    setahead();
-  }
-  else if(infra1==0 && infra2==1){
-    setleft();
-    digitalWrite(IN1_MT,0);
-    digitalWrite(IN2_MT,1);//GIRAR SOBRE EL EJE
-    digitalWrite(IN3_MT,0);
-    digitalWrite(IN4_MT,0);
-    digitalWrite(IN5_MT,0);
-    digitalWrite(IN6_MT,1);
-    digitalWrite(IN7_MT,0);
-    digitalWrite(IN8_MT,0);
-  }
-  else if(infra1==1 && infra2==0){
-    setright();
-    digitalWrite(IN1_MT,0);
-    digitalWrite(IN2_MT,1);
-    digitalWrite(IN3_MT,0);
-    digitalWrite(IN4_MT,0);
-    digitalWrite(IN5_MT,0);
-    digitalWrite(IN6_MT,0);
-    digitalWrite(IN7_MT,0);
-    digitalWrite(IN8_MT,1);
+  
+  // SPEED_MT=100 ;
+  // SPEED_MT2=SPEED_MT;
+  // set_speed();
+  // int infra1=digitalRead(infrared1);
+  // int infra2=digitalRead(infrared2);
+  // Serial.print(infra2);
+  // Serial.print(",");
+  // Serial.println(infra1);
+  // if(infra1==0 && infra2==0){
+  //   digitalWrite(IN1_MT,0);
+  //   digitalWrite(IN2_MT,0);
+  //   digitalWrite(IN3_MT,0);
+  //   digitalWrite(IN4_MT,0);
+  //   digitalWrite(IN5_MT,0);
+  //   digitalWrite(IN6_MT,1);
+  //   digitalWrite(IN7_MT,0);
+  //   digitalWrite(IN8_MT,1);
+  // }
+  // else if(infra1==0 && infra2==1){
+  // //   setleft();
+  //   digitalWrite(IN1_MT,0);
+  //   digitalWrite(IN2_MT,0);//GIRAR SOBRE EL EJE
+  //   digitalWrite(IN3_MT,0);
+  //   digitalWrite(IN4_MT,0);
+  //   digitalWrite(IN5_MT,0);
+  //   digitalWrite(IN6_MT,1);
+  //   digitalWrite(IN7_MT,1);
+  //   digitalWrite(IN8_MT,0);
+  // }
+  // else if(infra1==1 && infra2==0){
+  //   // setright();
+  //   digitalWrite(IN1_MT,0);
+  //   digitalWrite(IN2_MT,0);//GIRAR SOBRE EL EJE
+  //   digitalWrite(IN3_MT,0);
+  //   digitalWrite(IN4_MT,0);
+  //   digitalWrite(IN5_MT,1);
+  //   digitalWrite(IN6_MT,0);
+  //   digitalWrite(IN7_MT,0);
+  //   digitalWrite(IN8_MT,1);
     
-  }
-  else if(infra1==1 && infra2==1){
-    stop(0);
-  }
-  delay(50);
-  */
-  // if()
-  // if()
-  zonaC();
+  // }
+  // else if(infra1==1 && infra2==1){
+  //   stop(0);
+  // }
 }
 //funcion contabilizadora de pulsos del encoder
 void interruption() {
@@ -893,21 +896,21 @@ void calibrar_col(){
   for(int i=1;i<=4;i++){ 
     if(i==1){ 
       Serial.println("morado");
-      analogWrite(purpleLed,125);
+      digitalWrite(purpleLed,1);
       delay(3000);
       purple=setColors();
       digitalWrite(purpleLed,0);
       Serial.println(purple);
     }
     else if(i==2){ 
-      analogWrite(pinkLed,125);
+      digitalWrite(pinkLed,1);
       delay(3000);
       pink=setColors();
       digitalWrite(pinkLed,0);
       Serial.println(pink);
     }
     else if(i==3){ 
-      analogWrite(yellowLed,125);
+      digitalWrite(yellowLed,1);
       delay(3000);
       yellow=setColors();
       digitalWrite(yellowLed,0);
@@ -915,7 +918,7 @@ void calibrar_col(){
     }
     else if(i==4){ 
       Serial.println("negro");
-      analogWrite(blackLed,125);
+      digitalWrite(blackLed,1);
       delay(3000);
       black=setColors();
       digitalWrite(blackLed,0);
@@ -923,21 +926,32 @@ void calibrar_col(){
     }
   }
 }
+int blackWhite(){
+  int color=setColors();
+  if(color<197){
+    Serial.println(0);
+    return 0;
+  }
+  else{
+    Serial.println(1);
+    return 1;
+  }
+}
 int setColors(){//devuelve valores RGB
   digitalWrite(s2,0);
   digitalWrite(s3,0);
   int red=pulseIn(outTCS,1);
-  delay(200);
+  wait(20);
   
   digitalWrite(s2,1);
   digitalWrite(s3,1);
   int green=pulseIn(outTCS,1);
-  delay(200);
+  wait(20);
 
   digitalWrite(s2,0);
   digitalWrite(s3,1);
   int blue=pulseIn(outTCS,1);
-  delay(200);
+  wait(20);
   
   Serial.print("Red:");
   Serial.print(red);
@@ -965,17 +979,17 @@ void girar(int directions[4][2]){
 void colorDet(){
   int col = getcolor();
   if(col == 1){
-    analogWrite(purpleLed,125);
+      digitalWrite(purpleLed,1);
     delay(1000);
     digitalWrite(purpleLed,0);
   }
   else if(col == 2){
-    analogWrite(pinkLed,125);
+      digitalWrite(pinkLed,1);
     delay(1000);
     digitalWrite(pinkLed,0);
   }
   else if(col == 3){
-    analogWrite(yellowLed,125);
+      digitalWrite(yellowLed,1);
     delay(1000);
     digitalWrite(yellowLed,0);
   }
@@ -1306,7 +1320,6 @@ void path(){
         if(color != 4){
 
         }
-        
         // tipo 2: circulo o cuadrado con el centro despejado sin línea, recorrer el contorno
         
     }// Error, 001 and 100 
@@ -1321,10 +1334,48 @@ void path(){
     // }
 }
 void zonaB(){
-    SPEED_MT = 90;
-    SPEED_MT2 = SPEED_MT;
-    set_speed();
-    while(paredAdelante() == false){
-        path();
-    }
+  SPEED_MT=100 ;
+  SPEED_MT2=SPEED_MT;
+  set_speed();
+  int infra1=digitalRead(infrared1);
+  int infra2=digitalRead(infrared2);
+  Serial.print(infra2);
+  Serial.print(",");
+  Serial.println(infra1);
+  if(infra1==0 && infra2==0){
+    digitalWrite(IN1_MT,0);
+    digitalWrite(IN2_MT,0);
+    digitalWrite(IN3_MT,0);
+    digitalWrite(IN4_MT,0);
+    digitalWrite(IN5_MT,0);
+    digitalWrite(IN6_MT,1);
+    digitalWrite(IN7_MT,0);
+    digitalWrite(IN8_MT,1);
+  }
+  else if(infra1==0 && infra2==1){
+  //   setleft();
+    digitalWrite(IN1_MT,0);
+    digitalWrite(IN2_MT,0);//GIRAR SOBRE EL EJE
+    digitalWrite(IN3_MT,0);
+    digitalWrite(IN4_MT,0);
+    digitalWrite(IN5_MT,0);
+    digitalWrite(IN6_MT,1);
+    digitalWrite(IN7_MT,1);
+    digitalWrite(IN8_MT,0);
+  }
+  else if(infra1==1 && infra2==0){
+    // setright();
+    digitalWrite(IN1_MT,0);
+    digitalWrite(IN2_MT,0);//GIRAR SOBRE EL EJE
+    digitalWrite(IN3_MT,0);
+    digitalWrite(IN4_MT,0);
+    digitalWrite(IN5_MT,1);
+    digitalWrite(IN6_MT,0);
+    digitalWrite(IN7_MT,0);
+    digitalWrite(IN8_MT,1);
+    
+  }
+  else if(infra1==1 && infra2==1){
+    stop(0);
+  }
 }
