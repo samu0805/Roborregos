@@ -1038,9 +1038,12 @@ void zonaC() {
 void pelotaEncontrada(){
     right();
     right();
+    corregir_giro();
     c=0;
     c2=0;
-    back(110);
+    back(120);
+    stop(0);
+    wait(1000);
     servo.write(0);
 }
 void zonaA(){
