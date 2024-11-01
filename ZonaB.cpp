@@ -6,10 +6,10 @@
 void path(){
     int infra1=digitalRead(infrared1);
     int infra2=digitalRead(infrared2);
-    int col = getColor();
+    int color = getcolor();
     Serial.print(infra2);
     Serial.print(",");
-    Serial.print(col);
+    Serial.print(color);
     Serial.print(",");
     Serial.println(infra1);
      //básico
@@ -22,7 +22,7 @@ void path(){
         while (!found){ //sacar un rango de pasos para llegar al final
             setleft();
             infra1=digitalRead(infrared1);
-            color = getColor(color);
+            color = getcolor();
             if(infra1 == 0 && color == 4){
                 break;
             }
@@ -45,8 +45,8 @@ void path(){
         bool linea = false; 
         while (count < 100 && linea == false){
             setahead();
-            col = getcolor();
-            if(col == 4){
+            color = getcolor();
+            if(color == 4){
                 linea = true; 
             }
             count++; 
@@ -65,14 +65,13 @@ void path(){
     else if (infra1 == 1 && color != 4 && infra2 == 0){
         setleft();
     }
-    else{
-        cout << "error";
-    }
+    // else{
+    //     cout << "error";
+    // }
 }
-
 void zonaB(){
-    SPEED_MT = 90
-    SPEED_MT2 = SPEED_MT
+    SPEED_MT = 90;
+    SPEED_MT2 = SPEED_MT;
     set_speed();
     while(paredAdelante() == false){
         path();
