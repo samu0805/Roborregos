@@ -1,3 +1,8 @@
+// Escrito por: Fernando Hernandez y Luis Benvenuto
+// Código para la competencia interna de RoBorregos: Candidates.
+// Fecha final: 2 de Noviembre de 2024
+// Link del repo en git: https://github.com/samu0805/Roborregos
+
 #include <Servo.h>
 //MPU6050
 //PINES: SCL-21,SDA-20
@@ -698,6 +703,7 @@ void inicializarMPU6050(){//calibracion del mpu
   mpu.on_FIFO(print_Values);
 }
 // ALGORITMOS (LÓGICA) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// función para detectar si hay una linea durante el avance
 bool lineaAbajo(){
   int state_infra1=digitalRead(infrared1);
   int state_infra2=digitalRead(infrared2);
@@ -709,6 +715,7 @@ bool lineaAbajo(){
     return 0;
   }
 }
+//obtener la distancia con el ulrasonico
 void distancia(){//calculo con sensor ultrasonico
   digitalWrite(trig, LOW);
   delayMicroseconds(2);
@@ -718,21 +725,18 @@ void distancia(){//calculo con sensor ultrasonico
   duration = pulseIn(echo, HIGH);
   // Calculamos la distancia (en cm)
   distance = (duration * 0.034) / 2; 
-  Serial.println(distance);
   delay(100);
   //return distance;
 }
+// se define si hay una pared adelante o no, considerando 15 cm de distancia para la siguiente pared. 
 bool paredAdelante(){
-  distancia();
-  if(distance < 15){
-    return true;
-  }
   distancia();
   if(distance < 15){
     return true;
   }
   return false; 
 }
+// funcion para obtener el valor del color que se lee con el sensor de color, ya sea morado, rosa o amarillo
 int getcolor(){//devuelve el color
 // 1:morado
 // 2:rosa
@@ -754,24 +758,25 @@ int getcolor(){//devuelve el color
   int color=green+red+blue;
   Serial.println(color);
 
-if(green>red && green>blue && (red>blue || abs(red-blue)<10)){
-  // Serial.println("Color MORADO");
-  return 1;
-}
+  // morado
+  if(green>red && green>blue && (red>blue || abs(red-blue)<10)){
+    // Serial.println("Color MORADO");
+    return 1;
+  }
+  // rosa
+  else if(green>red && green>blue && (blue>red)){
+    // Serial.println("Color ROSA");
+    return 2;
 
-else if(green>red && green>blue && (blue>red)){
-  // Serial.println("Color ROSA");
-  return 2;
-
+  }
+  // amarillo
+  else if(blue>green && blue>red && green>red ){
+    // Serial.println("Color AMARILLO");
+    return 3;
+  }
 }
-
-else if(blue>green && blue>red && green>red ){
-  // Serial.println("Color AMARILLO");
-  return 3;
-}
-
-}
-void calibrar_col(){//calibracion de color para zonaB
+//calibracion de color para zonaB
+void calibrar_col(){
       Serial.println("blanco");
       digitalWrite(blackLed,1);
       delay(3000);
@@ -786,7 +791,8 @@ void calibrar_col(){//calibracion de color para zonaB
       digitalWrite(purpleLed,0);
       Serial.println(black);
 }
-int blackWhite(){//Funcion para determinar si hay linea en la zonaB
+//Funcion para determinar si hay linea en la zonaB
+int blackWhite(){
   int color=setColors();
   int midle=white+(black-white)/2;
   if(color<midle){
@@ -802,7 +808,8 @@ int blackWhite(){//Funcion para determinar si hay linea en la zonaB
     return 1;
   }
 }
-int setColors(){//devuelve valores RGB
+//funcion para devolver valores RGB
+int setColors(){
   digitalWrite(s2,0);
   digitalWrite(s3,0);
   int red=pulseIn(outTCS,1);
@@ -830,6 +837,7 @@ int setColors(){//devuelve valores RGB
 }
 
 // ZONA C !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// cambio de direcciones, edicion de la matriz de direcciones y giro a la izquierda
 void girar(int directions[4][2]){
   int tempx = directions[0][0];
   int tempy = directions[0][1];
@@ -844,56 +852,65 @@ void girar(int directions[4][2]){
   c=0;
   c2=0;
 }
+// función para detección de colores en la zona C
 void colorDet(){
   wait(500);
   int col = getcolor();
   if(col == 1){
-      digitalWrite(purpleLed,1);
+    digitalWrite(purpleLed,1);
     delay(500);
     digitalWrite(purpleLed,0);
   }
   else if(col == 2){
-      digitalWrite(pinkLed,1);
+    digitalWrite(pinkLed,1);
     delay(500);
     digitalWrite(pinkLed,0);
   }
   else if(col == 3){
-      digitalWrite(yellowLed,1);
+    digitalWrite(yellowLed,1);
     delay(500);
     digitalWrite(yellowLed,0);
   }
   colors[col-1]++;
 }
-//arriba, izquierda, abajo, derecha
+// DFS, o algoritmo de busqueda en profundidad. Funcion recursiva encargada de recorrer y analizar todo el laberinto
 void search(bool visited[3][5], int x, int y, int directions[4][2], int backstep[3][5], int& cnt, bool& pathFound){
+  // deteccion y notificacion del color 
   colorDet();
+  // marcar como visitado la posicion actual
   visited[x][y] = true;
+  // subir el contador para determinar la cantidad de pasos que se necesitan para llegar al final
   if(pathFound == false){
       cnt++;
       backstep[x][y] = cnt;
   }
+  // si ya se encontro la casilla de salida, parar el contador
   if(x == 2 && y == 4){
     pathFound = true; 
   }
+  // revision de las 4 pparedes adyacentes al nodo o casilla en el que esta parado.
   for (int i = 0; i<4; i++){
     int newX = x + directions[0][0];
     int newY = y + directions[0][1];
-    // Serial.println(newY);
-    // delay(100);
+    // revisar tanto en progra como en fisico si es posible visitarla 
     if((newX >= 0 && newY >= 0 && newX<3 && newY <5) && (paredAdelante() == false)){
       if(visited[newX][newY] == false){
+        // visitar la casilla
         ahead();
         c=0;
         c2=0;
+        // revision del caudro negro
         if(lineaNegra == false){
           search(visited, newX, newY, directions, backstep, cnt, pathFound);
           corregir_giro();
           c=0;
           c2=0;
+          // regreso al nodo anterior despues de dar 4 vueltas en el nodo visitado anteriormente
           back(80);
           stop(1000);
         }
         else{
+          // marcar la casilla negra como visitada
           visited[newX][newY] = true;
           analogWrite(blackLed,125);
           delay(1000);
@@ -903,14 +920,17 @@ void search(bool visited[3][5], int x, int y, int directions[4][2], int backstep
     }
     girar(directions);
   }
+  // restar el contador cada vez que se vaya para atras sin haber encontrado la casilla
   if(pathFound == false){
     backstep[x][y] = 30;
     cnt--;
   }
 }
+// funcion para salir del laberinto ya una vez recorrido todos los nodos. 
 void fuga(int cnt, int x, int y, int Mcolor, int directions[4][2], int backstep[3][5]){
   bool foundColor = false;
   for(int i = 1; i < cnt; i++){
+    // busqueda del color mas repetido en todo el laberinto
     if(foundColor == false){
       int col = getcolor();
       if (col== Mcolor){
@@ -919,7 +939,7 @@ void fuga(int cnt, int x, int y, int Mcolor, int directions[4][2], int backstep[
         colorDet();
       }
     }
-    //búsqueda 
+    //búsqueda de la salida en cada uno de los nodos comprobando con la matriz las casillas para la salida. 
     for (int j = 0; j < 4; j++){
       int newX = x + directions[0][0];
       int newY = y + directions[0][1];
@@ -974,6 +994,7 @@ void zonaC() {
 
 
 //Zona A !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// funcion para cuando se haya encontrado la pelota
 void pelotaEncontrada(){
     right();
     right();
@@ -984,6 +1005,7 @@ void pelotaEncontrada(){
     stop(1000);
     servo.write(0);
 }
+// algoritmo de la zona A
 void zonaA(){
     bool foundPelota = false; 
     bool foundSalida = false;
@@ -999,14 +1021,12 @@ void zonaA(){
             if(lineaNegra == false){
                 left();
             }else{
-                lineaNegra = true;
                 left();
             }
             ahead();
             if(lineaNegra == false){
                 left();
             }else{
-                lineaNegra = true;
                 left();
                 ahead();
                 right();
@@ -1017,6 +1037,7 @@ void zonaA(){
             foundPelota = true;
         }
     }
+    // por si se encontro la linea, ahora buscarla por el otro lado
     while (foundPelota == false){
         if(paredAdelante() == true){
             left();
@@ -1029,7 +1050,7 @@ void zonaA(){
             pelotaEncontrada();
         } 
     }
-    //fuga 
+    //salida del laberinto ya con un conteo de veces que giro tanto para la izquierda como para la derecha 
     int pos = countD-countL;
     ahead();
     if(lineaNegra == true){
@@ -1137,14 +1158,11 @@ void zonaA(){
 }
 
 // ZONA B !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// 0 detectar negro, 1 detectar color
-//cambiar color en el caso de que sea diferente número para blanco y negro
-// 5 igual a blanco, 4 a negro
-
+// 0 detectar blanco, 1 detectar negro
+// camino de la línea, utilizando ambos sensores infrarrojos y el de color 
 void path(){
     // 0 no linea - 1 linea
     // derecho
-    
     int infra1=digitalRead(infrared1);
     // izquierdo
     int infra2=digitalRead(infrared2);
@@ -1172,6 +1190,7 @@ void path(){
             }
         }
         */
+        setahead();
         
     }// Línea en la izquierda
     else if(infra2 == 1 && color == 1 && infra1 == 0){
