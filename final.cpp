@@ -223,7 +223,7 @@ void loop() {
   //   set_speed();
   //   }
   // ahead();
-   zonaB();
+   zonaA();
 
 }
 //funcion contabilizadora de pulsos del encoder
