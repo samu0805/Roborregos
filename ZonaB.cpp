@@ -108,10 +108,10 @@ void path(){
         // tipo 2: circulo o cuadrado con el centro despejado sin línea, recorrer el contorno
         
     }// Error, 001 and 100 
-    else if (infra2 == 0 && color = 0 infra1 == 1){
+    else if (infra2 == 0 && color == 0 && infra1 == 1){
         virarD();
     }
-    else if (infra2 == 1 && color == 0 infra1 == 0){
+    else if (infra2 == 1 && color == 0 && infra1 == 0){
         virarI();
     }
     // else{
