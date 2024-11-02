@@ -1083,17 +1083,17 @@ void colorDet(){
   wait(500);
   int col = getcolor();
   if(col == 1){
-      digitalWrite(purpleLed,1);
+    digitalWrite(purpleLed,1);
     delay(500);
     digitalWrite(purpleLed,0);
   }
   else if(col == 2){
-      digitalWrite(pinkLed,1);
+    digitalWrite(pinkLed,1);
     delay(500);
     digitalWrite(pinkLed,0);
   }
   else if(col == 3){
-      digitalWrite(yellowLed,1);
+    digitalWrite(yellowLed,1);
     delay(500);
     digitalWrite(yellowLed,0);
   }
@@ -1117,7 +1117,7 @@ void search(bool visited[3][5], int x, int y, int directions[4][2], int backstep
     // delay(100);
     if((newX >= 0 && newY >= 0 && newX<3 && newY <5) && (paredAdelante() == false)){
       if(visited[newX][newY] == false){
-        ahead();
+        aheadC();
         c=0;
         c2=0;
         if(lineaNegra == false){
@@ -1161,7 +1161,7 @@ void fuga(int cnt, int x, int y, int Mcolor, int directions[4][2], int backstep[
       if (newX >= 0 && newY >= 0 && newX < 3 && newY <5 && backstep[newX][newY] == i+1){
         c = 0;
         c2=0;
-        ahead();
+        aheadC();
         j=4;
         x = newX;
         y = newY;
@@ -1175,7 +1175,7 @@ void fuga(int cnt, int x, int y, int Mcolor, int directions[4][2], int backstep[
     int newX = x + directions[0][0];
     int newY = y + directions[0][1];
     if(newX == 2 && newY == 5){
-      ahead();
+      aheadC();
     }
   }
 }
@@ -1215,7 +1215,7 @@ void pelotaEncontrada(){
     corregir_giro();
     c=0;
     c2=0;
-    back(120);
+    back(130);
     stop(1000);
     servo.write(0);
 }
@@ -1233,20 +1233,19 @@ void zonaA(){
             ahead();
             if(lineaNegra == false){
                 left();
-            }else{
-                lineaNegra = true;
-                left();
-            }
-            ahead();
-            if(lineaNegra == false){
-                left();
-            }else{
-                lineaNegra = true;
-                left();
                 ahead();
-                right();
+                if(lineaNegra == false){
+                  left();
+                  countD++;
+                }else{
+                  left();
+                  ahead();
+                  right();
+                }
+            }else{
+                left();
             }
-            countD++;
+           
         }else{
             pelotaEncontrada();
             foundPelota = true;
@@ -1300,9 +1299,6 @@ void zonaA(){
             ahead();
         }
     }else{
-        //peor caso
-        //pos == 1 -> true
-        // or pos == 0
         if (pos == 2){
           ahead();
         }
@@ -1325,7 +1321,6 @@ void zonaA(){
                     if(lineaNegra == false){
                         right();
                     }else{
-                        lineaNegra = true;
                         left();
                         ahead();
                         left();
@@ -1341,7 +1336,6 @@ void zonaA(){
                     }
                     right();
                 }else{
-                    lineaNegra = true;
                     right();
                 }
               
