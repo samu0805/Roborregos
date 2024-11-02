@@ -109,10 +109,10 @@ void path(){
         
     }// Error, 001 and 100 
     else if (infra2 == 0 && color = 0 infra1 == 1){
-        virarI();
+        virarD();
     }
     else if (infra2 == 1 && color == 0 infra1 == 0){
-        virarD();
+        virarI();
     }
     // else{
     //     cout << "error";
